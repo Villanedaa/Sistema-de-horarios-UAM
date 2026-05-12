@@ -7,103 +7,112 @@ namespace SistemaHorarios.API.Controllers;
 public class MateriasController : ControllerBase
 {
     [HttpGet]
-    public IActionResult ObtenerMaterias()
+    public IActionResult ObtenerMaterias(
+        [FromQuery] string? busqueda,
+        [FromQuery] int? semestre,
+        [FromQuery] string? estado)
     {
-        var materias = new[]
+        return Ok(new[]
         {
             new
             {
-                Id = 1,
-                Codigo = "MAT-001",
-                Nombre = "Programación I",
-                Creditos = 3,
-                IntensidadHorariaSemanal = 4,
-                SemestreSugerido = 1,
+                IdMateria = 1,
+                Codigo = "MAT101",
+                Nombre = "Cálculo Diferencial",
+                Creditos = 4,
+                IntensidadHorariaSemanal = 64,
+                Semestre = 1,
+                CantidadGrupos = 2,
                 Estado = "Activa"
             },
             new
             {
-                Id = 2,
-                Codigo = "MAT-002",
-                Nombre = "Estructuras de Datos",
+                IdMateria = 2,
+                Codigo = "MAT201",
+                Nombre = "Ecuaciones Diferenciales",
                 Creditos = 3,
-                IntensidadHorariaSemanal = 4,
-                SemestreSugerido = 3,
+                IntensidadHorariaSemanal = 64,
+                Semestre = 5,
+                CantidadGrupos = 6,
                 Estado = "Activa"
             },
             new
             {
-                Id = 3,
-                Codigo = "MAT-003",
-                Nombre = "Bases de Datos",
-                Creditos = 3,
-                IntensidadHorariaSemanal = 4,
-                SemestreSugerido = 4,
+                IdMateria = 3,
+                Codigo = "MAT301",
+                Nombre = "Cálculo Integral",
+                Creditos = 4,
+                IntensidadHorariaSemanal = 64,
+                Semestre = 2,
+                CantidadGrupos = 3,
                 Estado = "Activa"
             }
-        };
-
-        return Ok(materias);
+        });
     }
 
     [HttpGet("{id}")]
     public IActionResult ObtenerMateriaPorId(int id)
     {
-        var materia = new
+        return Ok(new
         {
-            Id = id,
-            Codigo = "MAT-002",
-            Nombre = "Estructuras de Datos",
+            IdMateria = id,
+            Codigo = "MAT201",
+            Nombre = "Ecuaciones Diferenciales",
             Creditos = 3,
-            IntensidadHorariaSemanal = 4,
-            SemestreSugerido = 3,
+            IntensidadHorariaSemanal = 64,
+            Semestre = 5,
+            CantidadGrupos = 6,
             Estado = "Activa",
             Prerrequisitos = new[]
             {
                 new
                 {
-                    Id = 1,
-                    Codigo = "MAT-001",
-                    Nombre = "Programación I"
+                    IdMateria = 1,
+                    Codigo = "MAT101",
+                    Nombre = "Cálculo Diferencial"
+                },
+                new
+                {
+                    IdMateria = 3,
+                    Codigo = "MAT301",
+                    Nombre = "Cálculo Integral"
                 }
             }
-        };
-
-        return Ok(materia);
+        });
     }
 
     [HttpPost]
     public IActionResult CrearMateria([FromBody] CrearMateriaRequest request)
     {
-        var materiaCreada = new
+        return Ok(new
         {
-            Id = 4,
-            Codigo = request.Codigo,
-            Nombre = request.Nombre,
-            Creditos = request.Creditos,
-            IntensidadHorariaSemanal = request.IntensidadHorariaSemanal,
-            SemestreSugerido = request.SemestreSugerido,
-            Estado = "Activa"
-        };
-
-        return Ok(materiaCreada);
+            IdMateria = 4,
+            request.Codigo,
+            request.Nombre,
+            request.Creditos,
+            request.IntensidadHorariaSemanal,
+            request.Semestre,
+            request.IdsPrerrequisitos,
+            Estado = "Activa",
+            Mensaje = "Materia creada correctamente."
+        });
     }
 
     [HttpPut("{id}")]
     public IActionResult ActualizarMateria(int id, [FromBody] ActualizarMateriaRequest request)
     {
-        var materiaActualizada = new
+        return Ok(new
         {
-            Id = id,
-            Codigo = request.Codigo,
-            Nombre = request.Nombre,
-            Creditos = request.Creditos,
-            IntensidadHorariaSemanal = request.IntensidadHorariaSemanal,
-            SemestreSugerido = request.SemestreSugerido,
-            Estado = request.Estado
-        };
-
-        return Ok(materiaActualizada);
+            IdMateria = id,
+            request.Codigo,
+            request.Nombre,
+            request.Creditos,
+            request.IntensidadHorariaSemanal,
+            request.Semestre,
+            request.IdsPrerrequisitos,
+            request.Estado,
+            Mensaje = "Materia actualizada correctamente."
+        });
     }
 
     [HttpDelete("{id}")]
@@ -111,29 +120,58 @@ public class MateriasController : ControllerBase
     {
         return Ok(new
         {
-            Mensaje = "Materia eliminada correctamente.",
-            Id = id
+            IdMateria = id,
+            Mensaje = "Materia inactivada correctamente."
+        });
+    }
+
+    [HttpGet("activas")]
+    public IActionResult ObtenerMateriasActivas()
+    {
+        return Ok(new[]
+        {
+            new
+            {
+                IdMateria = 1,
+                Codigo = "MAT101",
+                Nombre = "Cálculo Diferencial"
+            },
+            new
+            {
+                IdMateria = 2,
+                Codigo = "MAT201",
+                Nombre = "Ecuaciones Diferenciales"
+            },
+            new
+            {
+                IdMateria = 3,
+                Codigo = "MAT301",
+                Nombre = "Cálculo Integral"
+            }
         });
     }
 
     [HttpGet("{id}/prerrequisitos")]
     public IActionResult ObtenerPrerrequisitosDeMateria(int id)
     {
-        var prerrequisitos = new[]
-        {
-            new
-            {
-                Id = 1,
-                Codigo = "MAT-001",
-                Nombre = "Programación I",
-                Creditos = 3
-            }
-        };
-
         return Ok(new
         {
             IdMateria = id,
-            Prerrequisitos = prerrequisitos
+            Prerrequisitos = new[]
+            {
+                new
+                {
+                    IdMateria = 1,
+                    Codigo = "MAT101",
+                    Nombre = "Cálculo Diferencial"
+                },
+                new
+                {
+                    IdMateria = 3,
+                    Codigo = "MAT301",
+                    Nombre = "Cálculo Integral"
+                }
+            }
         });
     }
 }
@@ -144,7 +182,8 @@ public class CrearMateriaRequest
     public string Nombre { get; set; } = string.Empty;
     public int Creditos { get; set; }
     public int IntensidadHorariaSemanal { get; set; }
-    public int SemestreSugerido { get; set; }
+    public int Semestre { get; set; }
+    public List<int> IdsPrerrequisitos { get; set; } = new();
 }
 
 public class ActualizarMateriaRequest
@@ -153,6 +192,7 @@ public class ActualizarMateriaRequest
     public string Nombre { get; set; } = string.Empty;
     public int Creditos { get; set; }
     public int IntensidadHorariaSemanal { get; set; }
-    public int SemestreSugerido { get; set; }
+    public int Semestre { get; set; }
+    public List<int> IdsPrerrequisitos { get; set; } = new();
     public string Estado { get; set; } = string.Empty;
 }
