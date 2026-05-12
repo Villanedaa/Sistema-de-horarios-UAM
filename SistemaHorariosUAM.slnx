@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SistemaHorarios.API/SistemaHorarios.API.csproj" Id="6a68a2f7-4e84-4b5d-a224-299b09ea3442" />
+  <Project Path="SistemaHorarios.Datos/SistemaHorarios.Datos.csproj" />
+  <Project Path="SistemaHorarios.Logica/SistemaHorarios.Logica.csproj" />
+  <Project Path="SistemaHorarios.Modelos/SistemaHorarios.Modelos.csproj" />
+  <Project Path="SistemaHorarios.Pruebas/SistemaHorarios.Pruebas.csproj" Id="3554ee87-22cf-449e-9f56-f05f6470d263" />
+</Solution>

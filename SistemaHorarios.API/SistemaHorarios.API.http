@@ -1,0 +1,6 @@
+@SistemaHorarios.API_HostAddress = http://localhost:5023
+
+GET {{SistemaHorarios.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
