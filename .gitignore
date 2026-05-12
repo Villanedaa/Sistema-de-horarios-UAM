@@ -1,0 +1,17 @@
+.vs/
+bin/
+obj/
+
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+*.dll
+*.exe
+*.pdb
+
+TestResults/
+.idea/
+.DS_Store
+Thumbs.db
