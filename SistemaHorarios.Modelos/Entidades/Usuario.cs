@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.ComponentModel.DataAnnotations;
 
 namespace SistemaHorarios.Modelos.Entidades;
 
 public class Usuario
 {
+    [Key]
     public int IdUsuario { get; set; }
     public string NombreCompleto { get; set; } = string.Empty;
     public string Cedula { get; set; } = string.Empty;
