@@ -3,6 +3,7 @@ using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Modelos.DTOs.Auth;
 using SistemaHorarios.Modelos.Entidades;
 
+
 namespace SistemaHorarios.Logica.Negocio.Auth;
 
 public class AuthService : IAuthService
@@ -100,6 +101,36 @@ public class AuthService : IAuthService
                 usuario.NombreCompleto,
 
             Rol = usuario.IdRol.ToString()
+        };
+    }
+
+    public async Task<PerfilUsuarioDto>
+    ObtenerPerfil(int idUsuario)
+    {
+        var usuario =
+            await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(
+                    u => u.IdUsuario == idUsuario);
+
+        if (usuario == null)
+        {
+            throw new Exception(
+                "Usuario no encontrado");
+        }
+
+        return new PerfilUsuarioDto
+        {
+            IdUsuario = usuario.IdUsuario,
+
+            NombreCompleto =
+                usuario.NombreCompleto,
+
+            CorreoInstitucional =
+                usuario.CorreoInstitucional,
+
+            Rol =
+                usuario.Rol.Nombre
         };
     }
 }
