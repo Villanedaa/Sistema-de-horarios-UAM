@@ -2,6 +2,11 @@
 
 namespace SistemaHorarios.Modelos.DTOs.Auth;
 
+
+/// <summary>
+/// DTO utilizado para solicitudes
+/// de inicio de sesión.
+/// </summary>
 public class LoginRequestDto
 {
     [Required(

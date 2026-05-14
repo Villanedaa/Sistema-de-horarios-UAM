@@ -1,82 +1,80 @@
-using Microsoft.EntityFrameworkCore;
 using SistemaHorarios.API.Configuraciones;
-using SistemaHorarios.Datos.Contexto;
-using SistemaHorarios.Datos.Repositorios;
-using SistemaHorarios.Logica.Negocio.Auth;
-using SistemaHorarios.Logica.Negocio.Materias;
-using SistemaHorarios.API.Middlewares;
-using SistemaHorarios.API.Politicas;
+using SistemaHorarios.API.Extensions;
 
+// Punto de entrada principal de la aplicación.
 var builder = WebApplication.CreateBuilder(args);
 
-// DbContext
-builder.Services.AddDbContext<SistemaHorariosDbContext>(
-    options =>
-        options.UseMySql(
-            builder.Configuration.GetConnectionString(
-                "DefaultConnection"
-            ),
-            ServerVersion.AutoDetect(
-                builder.Configuration.GetConnectionString(
-                    "DefaultConnection"
-                )
-            )
-        )
-);
 
+// =========================
 // Controllers
+// =========================
+
+// Registra los controladores de la API.
 builder.Services.AddControllers();
 
+
+// =========================
 // Swagger
+// =========================
+
+// Habilita exploración de endpoints.
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.ConfigureSwagger();
+// Configura Swagger/OpenAPI.
+builder.Services.ConfigurarSwagger();
 
+
+// =========================
 // JWT
-builder.Services.ConfigureJwt(
+// =========================
+
+// Configura autenticación JWT.
+builder.Services.ConfigurarJWT(
     builder.Configuration
 );
 
-// Servicios Auth
-builder.Services.AddScoped<IAuthService, AuthService>();
 
-builder.Services.AddScoped<JwtService>();
+// =========================
+// Base de Datos
+// =========================
 
-builder.Services.AddScoped<PasswordService>();
+// Configura Entity Framework Core
+// y conexión MySQL.
+builder.Services.ConfigurarBaseDatos(
+    builder.Configuration
+);
 
-// Repositorios Materias
-builder.Services.AddScoped<MateriaRepository>();
 
-builder.Services.AddScoped<PrerrequisitoRepository>();
+// =========================
+// Servicios
+// =========================
 
-// Gestores Materias
-builder.Services.AddScoped<GestorMateria>();
+// Registra servicios, gestores
+// y repositorios del sistema.
+builder.Services.RegistrarServicios();
 
-builder.Services.AddScoped<GestorPrerrequisito>();
 
-// Políticas de autorización
-builder.Services
-    .ConfigureAuthorizationPolicies();
+// =========================
+// Políticas
+// =========================
 
+// Configura políticas de autorización.
+builder.Services.ConfigurarPoliticas();
 
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
 
-    app.UseSwaggerUI();
-}
+// =========================
+// Pipeline HTTP
+// =========================
 
-app.UseHttpsRedirection();
+// Configura middleware,
+// autenticación,
+// autorización
+// y endpoints.
+app.ConfigurarPipeline();
 
 
-app.UseMiddleware<ExceptionMiddleware>();
-app.UseAuthentication();
-
-app.UseAuthorization();
-
-app.MapControllers();
-
+// Inicia la aplicación.
 app.Run();

@@ -7,14 +7,32 @@ using System.Text;
 
 namespace SistemaHorarios.Logica.Negocio.Auth;
 
+/// <summary>
+/// Servicio encargado de generar tokens JWT
+/// para autenticación y autorización.
+/// </summary>
 public class JwtService
 {
     private readonly IConfiguration _configuration;
-
+    /// <summary>
+    /// Inicializa una nueva instancia del servicio JWT.
+    /// </summary>
+    /// <param name="configuration">
+    /// Configuración general de la aplicación.
+    /// </param>
     public JwtService(IConfiguration configuration)
     {
         _configuration = configuration;
     }
+    /// <summary>
+    /// Genera un token JWT para el usuario autenticado.
+    /// </summary>
+    /// <param name="usuario">
+    /// Usuario autenticado del sistema.
+    /// </param>
+    /// <returns>
+    /// Token JWT serializado.
+    /// </returns>
 
     public string GenerarToken(Usuario usuario)
     {

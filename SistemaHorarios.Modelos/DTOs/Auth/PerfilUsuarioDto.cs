@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace SistemaHorarios.Modelos.DTOs.Auth;
 
+/// <summary>
+/// DTO utilizado para solicitudes 
+/// de perfil de usuario.
+/// </summary>
 public class PerfilUsuarioDto
 {
     public int IdUsuario { get; set; }

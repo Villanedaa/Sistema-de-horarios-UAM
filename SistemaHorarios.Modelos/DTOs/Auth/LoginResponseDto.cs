@@ -5,7 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SistemaHorarios.Modelos.DTOs.Auth;
-
+/// <summary>
+/// DTO utilizado para respuestas de solicitudes
+/// de inicio de sesión.
+/// </summary>
 public class LoginResponseDto
 {
     public string Token { get; set; } = string.Empty;
