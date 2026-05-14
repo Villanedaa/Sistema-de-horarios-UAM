@@ -1,198 +1,245 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SistemaHorarios.API.DTOs.Materias;
+using SistemaHorarios.Logica.Negocio.Materias;
+using SistemaHorarios.Modelos.Entidades;
 
-namespace SistemaHorarios.API.Controllers;
-
-[ApiController]
-[Route("api/materias")]
-public class MateriasController : ControllerBase
+namespace SistemaHorarios.API.Controllers
 {
-    [HttpGet]
-    public IActionResult ObtenerMaterias(
-        [FromQuery] string? busqueda,
-        [FromQuery] int? semestre,
-        [FromQuery] string? estado)
+    [ApiController]
+    [Route("api/materias")]
+    public class MateriasController : ControllerBase
     {
-        return Ok(new[]
+        private readonly GestorMateria gestorMateria;
+        private readonly GestorPrerrequisito gestorPrerrequisito;
+
+        // Recibe los gestores necesarios para trabajar con materias y prerrequisitos.
+        public MateriasController(
+            GestorMateria gestorMateria,
+            GestorPrerrequisito gestorPrerrequisito)
         {
-            new
+            this.gestorMateria = gestorMateria;
+            this.gestorPrerrequisito = gestorPrerrequisito;
+        }
+
+        // Lista todas las materias registradas.
+        [HttpGet]
+        public async Task<ActionResult<List<MateriaResumenResponse>>> ObtenerMaterias()
+        {
+            List<Materia> materias = await gestorMateria.ListarMateriasAsync();
+
+            List<MateriaResumenResponse> respuesta = materias
+                .Select(MapearMateriaResumen)
+                .ToList();
+
+            return Ok(respuesta);
+        }
+
+        // Lista únicamente las materias activas.
+        [HttpGet("activas")]
+        public async Task<ActionResult<List<MateriaActivaResponse>>> ObtenerMateriasActivas()
+        {
+            List<Materia> materias = await gestorMateria.ListarMateriasActivasAsync();
+
+            List<MateriaActivaResponse> respuesta = materias
+                .Select(MapearMateriaActiva)
+                .ToList();
+
+            return Ok(respuesta);
+        }
+
+        // Consulta una materia por su identificador.
+        [HttpGet("{id}")]
+        public async Task<ActionResult<MateriaResponse>> ObtenerMateriaPorId(int id)
+        {
+            Materia? materia = await gestorMateria.ConsultarMateriaPorIdAsync(id);
+
+            if (materia == null)
             {
-                IdMateria = 1,
-                Codigo = "MAT101",
-                Nombre = "Cálculo Diferencial",
-                Creditos = 4,
-                IntensidadHorariaSemanal = 64,
-                Semestre = 1,
-                CantidadGrupos = 2,
-                Estado = "Activa"
-            },
-            new
-            {
-                IdMateria = 2,
-                Codigo = "MAT201",
-                Nombre = "Ecuaciones Diferenciales",
-                Creditos = 3,
-                IntensidadHorariaSemanal = 64,
-                Semestre = 5,
-                CantidadGrupos = 6,
-                Estado = "Activa"
-            },
-            new
-            {
-                IdMateria = 3,
-                Codigo = "MAT301",
-                Nombre = "Cálculo Integral",
-                Creditos = 4,
-                IntensidadHorariaSemanal = 64,
-                Semestre = 2,
-                CantidadGrupos = 3,
-                Estado = "Activa"
+                return NotFound("La materia no existe.");
             }
-        });
-    }
 
-    [HttpGet("{id}")]
-    public IActionResult ObtenerMateriaPorId(int id)
-    {
-        return Ok(new
+            return Ok(MapearMateriaResponse(materia));
+        }
+
+        // Crea una nueva materia.
+        [HttpPost]
+        public async Task<IActionResult> CrearMateria([FromBody] CrearMateriaRequest request)
         {
-            IdMateria = id,
-            Codigo = "MAT201",
-            Nombre = "Ecuaciones Diferenciales",
-            Creditos = 3,
-            IntensidadHorariaSemanal = 64,
-            Semestre = 5,
-            CantidadGrupos = 6,
-            Estado = "Activa",
-            Prerrequisitos = new[]
+            Materia materia = new Materia
             {
-                new
-                {
-                    IdMateria = 1,
-                    Codigo = "MAT101",
-                    Nombre = "Cálculo Diferencial"
-                },
-                new
-                {
-                    IdMateria = 3,
-                    Codigo = "MAT301",
-                    Nombre = "Cálculo Integral"
-                }
+                Codigo = request.Codigo,
+                Nombre = request.Nombre,
+                Creditos = request.Creditos,
+                IntensidadHorariaSemanal = request.IntensidadHorariaSemanal,
+                Semestre = request.Semestre
+            };
+
+            List<string> errores = await gestorMateria.CrearMateriaAsync(materia);
+
+            if (errores.Count > 0)
+            {
+                return BadRequest(errores);
             }
-        });
-    }
 
-    [HttpPost]
-    public IActionResult CrearMateria([FromBody] CrearMateriaRequest request)
-    {
-        return Ok(new
-        {
-            IdMateria = 4,
-            request.Codigo,
-            request.Nombre,
-            request.Creditos,
-            request.IntensidadHorariaSemanal,
-            request.Semestre,
-            request.IdsPrerrequisitos,
-            Estado = "Activa",
-            Mensaje = "Materia creada correctamente."
-        });
-    }
-
-    [HttpPut("{id}")]
-    public IActionResult ActualizarMateria(int id, [FromBody] ActualizarMateriaRequest request)
-    {
-        return Ok(new
-        {
-            IdMateria = id,
-            request.Codigo,
-            request.Nombre,
-            request.Creditos,
-            request.IntensidadHorariaSemanal,
-            request.Semestre,
-            request.IdsPrerrequisitos,
-            request.Estado,
-            Mensaje = "Materia actualizada correctamente."
-        });
-    }
-
-    [HttpDelete("{id}")]
-    public IActionResult EliminarMateria(int id)
-    {
-        return Ok(new
-        {
-            IdMateria = id,
-            Mensaje = "Materia inactivada correctamente."
-        });
-    }
-
-    [HttpGet("activas")]
-    public IActionResult ObtenerMateriasActivas()
-    {
-        return Ok(new[]
-        {
-            new
+            return Ok(new
             {
-                IdMateria = 1,
-                Codigo = "MAT101",
-                Nombre = "Cálculo Diferencial"
-            },
-            new
+                Mensaje = "Materia creada correctamente.",
+                Materia = MapearMateriaResponse(materia)
+            });
+        }
+
+        // Actualiza una materia existente.
+        [HttpPut("{id}")]
+        public async Task<IActionResult> ActualizarMateria(
+            int id,
+            [FromBody] ActualizarMateriaRequest request)
+        {
+            Materia materia = new Materia
             {
-                IdMateria = 2,
-                Codigo = "MAT201",
-                Nombre = "Ecuaciones Diferenciales"
-            },
-            new
+                Codigo = request.Codigo,
+                Nombre = request.Nombre,
+                Creditos = request.Creditos,
+                IntensidadHorariaSemanal = request.IntensidadHorariaSemanal,
+                Semestre = request.Semestre,
+                Activa = request.Activa
+            };
+
+            List<string> errores = await gestorMateria.ModificarMateriaAsync(id, materia);
+
+            if (errores.Count > 0)
             {
-                IdMateria = 3,
-                Codigo = "MAT301",
-                Nombre = "Cálculo Integral"
+                return BadRequest(errores);
             }
-        });
-    }
 
-    [HttpGet("{id}/prerrequisitos")]
-    public IActionResult ObtenerPrerrequisitosDeMateria(int id)
-    {
-        return Ok(new
-        {
-            IdMateria = id,
-            Prerrequisitos = new[]
+            Materia? materiaActualizada = await gestorMateria.ConsultarMateriaPorIdAsync(id);
+
+            if (materiaActualizada == null)
             {
-                new
-                {
-                    IdMateria = 1,
-                    Codigo = "MAT101",
-                    Nombre = "Cálculo Diferencial"
-                },
-                new
-                {
-                    IdMateria = 3,
-                    Codigo = "MAT301",
-                    Nombre = "Cálculo Integral"
-                }
+                return NotFound("La materia no existe.");
             }
-        });
+
+            return Ok(new
+            {
+                Mensaje = "Materia actualizada correctamente.",
+                Materia = MapearMateriaResponse(materiaActualizada)
+            });
+        }
+
+        // Desactiva una materia sin eliminarla físicamente.
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> EliminarMateria(int id)
+        {
+            List<string> errores = await gestorMateria.DesactivarMateriaAsync(id);
+
+            if (errores.Count > 0)
+            {
+                return BadRequest(errores);
+            }
+
+            return Ok(new
+            {
+                IdMateria = id,
+                Mensaje = "Materia inactivada correctamente."
+            });
+        }
+
+        // Lista los prerrequisitos activos asociados a una materia.
+        [HttpGet("{id}/prerrequisitos")]
+        public async Task<ActionResult<List<PrerrequisitoMateriaResponse>>> ObtenerPrerrequisitosDeMateria(int id)
+        {
+            Materia? materia = await gestorMateria.ConsultarMateriaPorIdAsync(id);
+
+            if (materia == null)
+            {
+                return NotFound("La materia no existe.");
+            }
+
+            List<Prerrequisito> prerrequisitos =
+                await gestorPrerrequisito.ListarPrerrequisitosPorMateriaAsync(id);
+
+            List<PrerrequisitoMateriaResponse> respuesta = new List<PrerrequisitoMateriaResponse>();
+
+            foreach (Prerrequisito prerrequisito in prerrequisitos)
+            {
+                PrerrequisitoMateriaResponse item =
+                    await MapearPrerrequisitoMateriaResponseAsync(prerrequisito);
+
+                respuesta.Add(item);
+            }
+
+            return Ok(respuesta);
+        }
+
+        // Convierte una entidad Materia en respuesta completa.
+        private MateriaResponse MapearMateriaResponse(Materia materia)
+        {
+            return new MateriaResponse
+            {
+                IdMateria = materia.IdMateria,
+                Codigo = materia.Codigo,
+                Nombre = materia.Nombre,
+                Creditos = materia.Creditos,
+                IntensidadHorariaSemanal = materia.IntensidadHorariaSemanal,
+                Semestre = materia.Semestre,
+                Activa = materia.Activa,
+                EstadoTexto = ObtenerEstadoTexto(materia.Activa)
+            };
+        }
+
+        // Convierte una entidad Materia en respuesta resumida.
+        private MateriaResumenResponse MapearMateriaResumen(Materia materia)
+        {
+            return new MateriaResumenResponse
+            {
+                IdMateria = materia.IdMateria,
+                Codigo = materia.Codigo,
+                Nombre = materia.Nombre,
+                Creditos = materia.Creditos,
+                IntensidadHorariaSemanal = materia.IntensidadHorariaSemanal,
+                Semestre = materia.Semestre,
+                Activa = materia.Activa,
+                EstadoTexto = ObtenerEstadoTexto(materia.Activa)
+            };
+        }
+
+        // Convierte una entidad Materia en respuesta para listas de selección.
+        private MateriaActivaResponse MapearMateriaActiva(Materia materia)
+        {
+            return new MateriaActivaResponse
+            {
+                IdMateria = materia.IdMateria,
+                Codigo = materia.Codigo,
+                Nombre = materia.Nombre
+            };
+        }
+
+        // Convierte un prerrequisito en respuesta para la API.
+        private async Task<PrerrequisitoMateriaResponse> MapearPrerrequisitoMateriaResponseAsync(
+            Prerrequisito prerrequisito)
+        {
+            Materia? materiaPrerrequisito =
+                await gestorMateria.ConsultarMateriaPorIdAsync(prerrequisito.IdMateriaPrerrequisito);
+
+            return new PrerrequisitoMateriaResponse
+            {
+                IdPrerrequisito = prerrequisito.IdPrerrequisito,
+                IdMateria = prerrequisito.IdMateria,
+                IdMateriaPrerrequisito = prerrequisito.IdMateriaPrerrequisito,
+                CodigoMateriaPrerrequisito = materiaPrerrequisito?.Codigo ?? string.Empty,
+                NombreMateriaPrerrequisito = materiaPrerrequisito?.Nombre ?? string.Empty,
+                Activo = prerrequisito.Activo
+            };
+        }
+
+        // Convierte el estado booleano en texto legible.
+        private string ObtenerEstadoTexto(bool activa)
+        {
+            if (activa)
+            {
+                return "Activa";
+            }
+
+            return "Inactiva";
+        }
     }
-}
-
-public class CrearMateriaRequest
-{
-    public string Codigo { get; set; } = string.Empty;
-    public string Nombre { get; set; } = string.Empty;
-    public int Creditos { get; set; }
-    public int IntensidadHorariaSemanal { get; set; }
-    public int Semestre { get; set; }
-    public List<int> IdsPrerrequisitos { get; set; } = new();
-}
-
-public class ActualizarMateriaRequest
-{
-    public string Codigo { get; set; } = string.Empty;
-    public string Nombre { get; set; } = string.Empty;
-    public int Creditos { get; set; }
-    public int IntensidadHorariaSemanal { get; set; }
-    public int Semestre { get; set; }
-    public List<int> IdsPrerrequisitos { get; set; } = new();
-    public string Estado { get; set; } = string.Empty;
 }

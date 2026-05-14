@@ -1,24 +1,26 @@
-﻿using SistemaHorarios.Modelos.Entidades;
+﻿using SistemaHorarios.Datos.Repositorios;
+using SistemaHorarios.Modelos.Entidades;
 
 namespace SistemaHorarios.Logica.Negocio.Materias
 {
-    // Gestiona las operaciones principales relacionadas con las materias.
+    // Gestiona las reglas de negocio relacionadas con las materias.
     public class GestorMateria
     {
-        private readonly List<Materia> listaMaterias;
+       
+        private readonly MateriaRepository materiaRepositorio;
         private readonly ValidadorMateria validadorMateria;
 
-        // Inicializa el gestor con una lista temporal en memoria para pruebas.
-        public GestorMateria()
+        // Recibe el repositorio de materias para trabajar con base de datos.
+        public GestorMateria(MateriaRepository materiaRepositorio)
         {
-            listaMaterias = new List<Materia>();
+            this.materiaRepositorio = materiaRepositorio;
             validadorMateria = new ValidadorMateria();
         }
 
         // Crea una nueva materia después de validar sus datos.
-        public List<string> CrearMateria(Materia materiaNueva)
+        public async Task<List<string>> CrearMateriaAsync(Materia materiaNueva)
         {
-            List<string> errores = ValidarCreacionMateria(materiaNueva);
+            List<string> errores = await ValidarCreacionMateriaAsync(materiaNueva);
 
             if (errores.Count > 0)
             {
@@ -26,75 +28,80 @@ namespace SistemaHorarios.Logica.Negocio.Materias
             }
 
             PrepararMateriaNueva(materiaNueva);
-            listaMaterias.Add(materiaNueva);
+
+            await materiaRepositorio.CrearMateriaAsync(materiaNueva);
 
             return errores;
         }
 
         // Modifica la información de una materia existente.
-        public List<string> ModificarMateria(int idMateria, Materia materiaModificada)
+        public async Task<List<string>> ModificarMateriaAsync(int idMateria, Materia materiaModificada)
         {
-            List<string> errores = ValidarModificacionMateria(idMateria, materiaModificada);
+            List<string> errores = await ValidarModificacionMateriaAsync(idMateria, materiaModificada);
 
             if (errores.Count > 0)
             {
                 return errores;
             }
 
-            Materia? materiaActual = ConsultarMateriaPorId(idMateria);
+            PrepararMateriaModificada(idMateria, materiaModificada);
 
-            if (materiaActual == null)
-            {
-                errores.Add("La materia que desea modificar no existe.");
-                return errores;
-            }
-
-            ActualizarDatosMateria(materiaActual, materiaModificada);
+            await materiaRepositorio.ActualizarMateriaAsync(materiaModificada);
 
             return errores;
         }
 
         // Consulta una materia por su identificador.
-        public Materia? ConsultarMateriaPorId(int idMateria)
+        public async Task<Materia?> ConsultarMateriaPorIdAsync(int idMateria)
         {
-            return listaMaterias.FirstOrDefault(materia => materia.IdMateria == idMateria);
+            if (idMateria <= 0)
+            {
+                return null;
+            }
+
+            return await materiaRepositorio.ObtenerMateriaPorIdAsync(idMateria);
         }
 
         // Consulta una materia por su código.
-        public Materia? ConsultarMateriaPorCodigo(string codigoMateria)
+        public async Task<Materia?> ConsultarMateriaPorCodigoAsync(string codigoMateria)
         {
             if (string.IsNullOrWhiteSpace(codigoMateria))
             {
                 return null;
             }
 
-            string codigoNormalizado = codigoMateria.Trim();
-
-            return listaMaterias.FirstOrDefault(materia =>
-                string.Equals(
-                    materia.Codigo,
-                    codigoNormalizado,
-                    StringComparison.OrdinalIgnoreCase
-                )
-            );
+            return await materiaRepositorio.ObtenerMateriaPorCodigoAsync(codigoMateria);
         }
 
         // Lista todas las materias registradas.
-        public List<Materia> ListarMaterias()
+        public async Task<List<Materia>> ListarMateriasAsync()
         {
-            return new List<Materia>(listaMaterias);
+            return await materiaRepositorio.ListarMateriasAsync();
         }
 
         // Lista únicamente las materias activas.
-        public List<Materia> ListarMateriasActivas()
+        public async Task<List<Materia>> ListarMateriasActivasAsync()
         {
-            return listaMaterias
-                .Where(materia => materia.Activa)
-                .ToList();
+            return await materiaRepositorio.ListarMateriasActivasAsync();
+        }
+
+        // Desactiva una materia existente.
+        public async Task<List<string>> DesactivarMateriaAsync(int idMateria)
+        {
+            List<string> errores = await ValidarDesactivacionMateriaAsync(idMateria);
+
+            if (errores.Count > 0)
+            {
+                return errores;
+            }
+
+            await materiaRepositorio.DesactivarMateriaAsync(idMateria);
+
+            return errores;
         }
 
         // Valida las reglas necesarias para crear una materia.
-        private List<string> ValidarCreacionMateria(Materia materiaNueva)
+        private async Task<List<string>> ValidarCreacionMateriaAsync(Materia materiaNueva)
         {
             List<string> errores = validadorMateria.Validar(materiaNueva);
 
@@ -103,8 +110,13 @@ namespace SistemaHorarios.Logica.Negocio.Materias
                 return errores;
             }
 
+            bool existeCodigo = await materiaRepositorio.ExisteCodigoMateriaAsync(
+                materiaNueva.Codigo,
+                0
+            );
+
             AgregarErrorSi(
-                ExisteMateriaConCodigo(materiaNueva.Codigo),
+                existeCodigo,
                 errores,
                 "Ya existe una materia registrada con el mismo código."
             );
@@ -113,7 +125,10 @@ namespace SistemaHorarios.Logica.Negocio.Materias
         }
 
         // Valida las reglas necesarias para modificar una materia.
-        private List<string> ValidarModificacionMateria(int idMateria, Materia materiaModificada)
+        private async Task<List<string>> ValidarModificacionMateriaAsync(
+            int idMateria,
+            Materia materiaModificada
+        )
         {
             List<string> errores = validadorMateria.Validar(materiaModificada);
 
@@ -128,14 +143,21 @@ namespace SistemaHorarios.Logica.Negocio.Materias
                 return errores;
             }
 
+            bool existeMateria = await materiaRepositorio.ExisteMateriaPorIdAsync(idMateria);
+
             AgregarErrorSi(
-                ConsultarMateriaPorId(idMateria) == null,
+                !existeMateria,
                 errores,
                 "La materia que desea modificar no existe."
             );
 
+            bool existeCodigo = await materiaRepositorio.ExisteCodigoMateriaAsync(
+                materiaModificada.Codigo,
+                idMateria
+            );
+
             AgregarErrorSi(
-                ExisteOtraMateriaConMismoCodigo(materiaModificada.Codigo, idMateria),
+                existeCodigo,
                 errores,
                 "Ya existe otra materia registrada con el mismo código."
             );
@@ -143,74 +165,47 @@ namespace SistemaHorarios.Logica.Negocio.Materias
             return errores;
         }
 
-        // Asigna los valores iniciales necesarios para una materia nueva.
+        // Valida que la materia exista antes de desactivarla.
+        private async Task<List<string>> ValidarDesactivacionMateriaAsync(int idMateria)
+        {
+            List<string> errores = new List<string>();
+
+            AgregarErrorSi(
+                idMateria <= 0,
+                errores,
+                "El identificador de la materia no es válido."
+            );
+
+            if (errores.Count > 0)
+            {
+                return errores;
+            }
+
+            bool existeMateria = await materiaRepositorio.ExisteMateriaPorIdAsync(idMateria);
+
+            AgregarErrorSi(
+                !existeMateria,
+                errores,
+                "La materia que desea desactivar no existe."
+            );
+
+            return errores;
+        }
+
+        // Normaliza los datos iniciales de una materia nueva.
         private void PrepararMateriaNueva(Materia materiaNueva)
         {
-            materiaNueva.IdMateria = GenerarNuevoIdMateria();
             materiaNueva.Codigo = materiaNueva.Codigo.Trim();
             materiaNueva.Nombre = materiaNueva.Nombre.Trim();
             materiaNueva.Activa = true;
         }
 
-        // Actualiza los datos modificables de una materia existente.
-        private void ActualizarDatosMateria(Materia materiaActual, Materia materiaModificada)
+        // Prepara los datos que serán actualizados en una materia existente.
+        private void PrepararMateriaModificada(int idMateria, Materia materiaModificada)
         {
-            materiaActual.Codigo = materiaModificada.Codigo.Trim();
-            materiaActual.Nombre = materiaModificada.Nombre.Trim();
-            materiaActual.Creditos = materiaModificada.Creditos;
-            materiaActual.IntensidadHorariaSemanal = materiaModificada.IntensidadHorariaSemanal;
-            materiaActual.Semestre = materiaModificada.Semestre;
-            materiaActual.Activa = materiaModificada.Activa;
-        }
-
-        // Verifica si ya existe una materia con el código indicado.
-        private bool ExisteMateriaConCodigo(string codigoMateria)
-        {
-            if (string.IsNullOrWhiteSpace(codigoMateria))
-            {
-                return false;
-            }
-
-            string codigoNormalizado = codigoMateria.Trim();
-
-            return listaMaterias.Any(materia =>
-                string.Equals(
-                    materia.Codigo,
-                    codigoNormalizado,
-                    StringComparison.OrdinalIgnoreCase
-                )
-            );
-        }
-
-        // Verifica si otra materia diferente ya tiene el mismo código.
-        private bool ExisteOtraMateriaConMismoCodigo(string codigoMateria, int idMateriaActual)
-        {
-            if (string.IsNullOrWhiteSpace(codigoMateria))
-            {
-                return false;
-            }
-
-            string codigoNormalizado = codigoMateria.Trim();
-
-            return listaMaterias.Any(materia =>
-                materia.IdMateria != idMateriaActual &&
-                string.Equals(
-                    materia.Codigo,
-                    codigoNormalizado,
-                    StringComparison.OrdinalIgnoreCase
-                )
-            );
-        }
-
-        // Genera un identificador temporal para pruebas en memoria.
-        private int GenerarNuevoIdMateria()
-        {
-            if (listaMaterias.Count == 0)
-            {
-                return 1;
-            }
-
-            return listaMaterias.Max(materia => materia.IdMateria) + 1;
+            materiaModificada.IdMateria = idMateria;
+            materiaModificada.Codigo = materiaModificada.Codigo.Trim();
+            materiaModificada.Nombre = materiaModificada.Nombre.Trim();
         }
 
         // Agrega un mensaje de error cuando una condición no se cumple.
