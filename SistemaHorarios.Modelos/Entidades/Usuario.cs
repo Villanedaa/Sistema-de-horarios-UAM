@@ -14,5 +14,7 @@ public class Usuario
     public string CorreoInstitucional { get; set; } = string.Empty;
     public string ContrasenaHash { get; set; } = string.Empty;
     public int IdRol { get; set; }
+    
+    public Rol Rol { get; set; } = null!;
     public string Estado { get; set; } = "Activo";
 }

@@ -24,4 +24,8 @@
     <ProjectReference Include="..\SistemaHorarios.Modelos\SistemaHorarios.Modelos.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Configuraciones\" />
+  </ItemGroup>
+
 </Project>

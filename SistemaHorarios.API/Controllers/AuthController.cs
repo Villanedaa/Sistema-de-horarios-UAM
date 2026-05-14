@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SistemaHorarios.Logica.Negocio.Auth;
+using SistemaHorarios.Modelos.DTOs.Auth;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -6,56 +8,34 @@ namespace SistemaHorarios.API.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
+    private readonly IAuthService _authService;
+
+    public AuthController(
+        IAuthService authService)
+    {
+        _authService = authService;
+    }
+
+    [HttpPost("registrar")]
+    public async Task<IActionResult> Registrar(
+    RegistroUsuarioDto dto)
+    {
+        await _authService.Registrar(dto);
+
+        return Ok(new
+        {
+            mensaje =
+                "Usuario registrado correctamente"
+        });
+    }
+
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login(
+        LoginRequestDto dto)
     {
-        if (request.Usuario == "admin@uam.edu.co")
-        {
-            return Ok(new
-            {
-                IdUsuario = 1,
-                Nombre = "Administrador",
-                Correo = request.Usuario,
-                Rol = "Admin",
-                Token = "token_admin_prueba"
-            });
-        }
+        var resultado =
+            await _authService.Login(dto);
 
-        return Ok(new
-        {
-            IdUsuario = 2,
-            Nombre = "Coordinador",
-            Correo = request.Usuario,
-            Rol = "Coordinador",
-            Token = "token_coordinador_prueba"
-        });
+        return Ok(resultado);
     }
-
-    [HttpPost("logout")]
-    public IActionResult Logout()
-    {
-        return Ok(new
-        {
-            Mensaje = "Sesión cerrada correctamente."
-        });
-    }
-
-    [HttpGet("perfil")]
-    public IActionResult ObtenerPerfil()
-    {
-        return Ok(new
-        {
-            IdUsuario = 2,
-            Nombre = "Coordinador",
-            Correo = "coordinador@uam.edu.co",
-            Rol = "Coordinador"
-        });
-    }
-}
-
-public class LoginRequest
-{
-    public string Usuario { get; set; } = string.Empty;
-    public string Contrasena { get; set; } = string.Empty;
-    public bool RecordarSesion { get; set; }
 }

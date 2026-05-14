@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SistemaHorarios.Logica.Negocio.Auth
+using SistemaHorarios.Modelos.DTOs.Auth;
+
+namespace SistemaHorarios.Logica.Negocio.Auth;
+
+public interface IAuthService
 {
-    internal class IAuthService
-    {
-    }
+    Task<LoginResponseDto> Login(LoginRequestDto dto);
+    Task Registrar(RegistroUsuarioDto dto);
 }
