@@ -37,7 +37,7 @@ public class JwtService
 
             new Claim(
                 ClaimTypes.Role,
-                usuario.IdRol.ToString())
+                usuario.Rol.Nombre)
         };
 
         var key =
