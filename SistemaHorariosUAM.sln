@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaHorarios.API", "SistemaHorarios.API\SistemaHorarios.API.csproj", "{CF79583B-6E84-4A07-83B1-650835C23FBC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaHorarios.Datos", "SistemaHorarios.Datos\SistemaHorarios.Datos.csproj", "{3A725C39-409A-4719-8361-55933316B5E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaHorarios.Logica", "SistemaHorarios.Logica\SistemaHorarios.Logica.csproj", "{00C39CB7-77C8-48DE-90B5-18490DB55DCD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaHorarios.Modelos", "SistemaHorarios.Modelos\SistemaHorarios.Modelos.csproj", "{883E52A2-B466-4B2A-918D-F4089F298657}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SistemaHorarios.Pruebas", "SistemaHorarios.Pruebas\SistemaHorarios.Pruebas.csproj", "{BACF211F-EAFC-445B-8979-8D3B02AB9F5E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CF79583B-6E84-4A07-83B1-650835C23FBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF79583B-6E84-4A07-83B1-650835C23FBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF79583B-6E84-4A07-83B1-650835C23FBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF79583B-6E84-4A07-83B1-650835C23FBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A725C39-409A-4719-8361-55933316B5E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A725C39-409A-4719-8361-55933316B5E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A725C39-409A-4719-8361-55933316B5E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A725C39-409A-4719-8361-55933316B5E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00C39CB7-77C8-48DE-90B5-18490DB55DCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00C39CB7-77C8-48DE-90B5-18490DB55DCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00C39CB7-77C8-48DE-90B5-18490DB55DCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00C39CB7-77C8-48DE-90B5-18490DB55DCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{883E52A2-B466-4B2A-918D-F4089F298657}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{883E52A2-B466-4B2A-918D-F4089F298657}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{883E52A2-B466-4B2A-918D-F4089F298657}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{883E52A2-B466-4B2A-918D-F4089F298657}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BACF211F-EAFC-445B-8979-8D3B02AB9F5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BACF211F-EAFC-445B-8979-8D3B02AB9F5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BACF211F-EAFC-445B-8979-8D3B02AB9F5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BACF211F-EAFC-445B-8979-8D3B02AB9F5E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
