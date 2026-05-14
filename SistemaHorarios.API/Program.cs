@@ -6,6 +6,7 @@ using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Logica.Negocio.Materias;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,62 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc(
+        "v1",
+        new()
+        {
+            Title = "SistemaHorarios.API",
+            Version = "v1"
+        });
+
+    options.AddSecurityDefinition(
+        "Bearer",
+        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+
+            Type =
+                Microsoft.OpenApi.Models
+                    .SecuritySchemeType.Http,
+
+            Scheme = "bearer",
+
+            BearerFormat = "JWT",
+
+            In = Microsoft.OpenApi.Models
+                .ParameterLocation.Header,
+
+            Description =
+                "Ingrese el token JWT así: Bearer {token}"
+        });
+
+    options.AddSecurityRequirement(
+        new Microsoft.OpenApi.Models
+            .OpenApiSecurityRequirement
+        {
+            {
+                new Microsoft.OpenApi.Models
+                    .OpenApiSecurityScheme
+                {
+                    Reference =
+                        new Microsoft.OpenApi.Models
+                            .OpenApiReference
+                        {
+                            Type =
+                                Microsoft.OpenApi.Models
+                                    .ReferenceType
+                                    .SecurityScheme,
+
+                            Id = "Bearer"
+                        }
+                },
+
+                Array.Empty<string>()
+            }
+        });
+});
 
 var jwtSettings =
     builder.Configuration.GetSection("Jwt");

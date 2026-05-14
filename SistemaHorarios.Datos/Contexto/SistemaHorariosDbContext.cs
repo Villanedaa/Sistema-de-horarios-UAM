@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SistemaHorarios.Modelos.Entidades;
+using SistemaHorarios.Datos.Seed;
 
 namespace SistemaHorarios.Datos.Contexto
 {
@@ -9,6 +10,14 @@ namespace SistemaHorarios.Datos.Contexto
             DbContextOptions<SistemaHorariosDbContext> options
         ) : base(options)
         {
+        }
+
+        protected override void OnModelCreating(
+            ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            SeedData.SeedRoles(modelBuilder);
         }
 
         public DbSet<Usuario> Usuarios { get; set; }

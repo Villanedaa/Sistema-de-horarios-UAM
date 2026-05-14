@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaHorarios.Datos.Contexto;
 
@@ -10,9 +11,11 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    partial class SistemaHorariosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514061017_CorregirRelacionUsuarioRol")]
+    partial class CorregirRelacionUsuarioRol
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -94,26 +97,6 @@ namespace SistemaHorarios.Datos.Migrations
                     b.HasKey("IdRol");
 
                     b.ToTable("Roles");
-
-                    b.HasData(
-                        new
-                        {
-                            IdRol = 1,
-                            Activo = true,
-                            Nombre = "Administrador"
-                        },
-                        new
-                        {
-                            IdRol = 2,
-                            Activo = true,
-                            Nombre = "Coordinador"
-                        },
-                        new
-                        {
-                            IdRol = 3,
-                            Activo = true,
-                            Nombre = "Docente"
-                        });
                 });
 
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Usuario", b =>

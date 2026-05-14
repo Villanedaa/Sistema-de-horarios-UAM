@@ -12,4 +12,6 @@ public interface IAuthService
 {
     Task<LoginResponseDto> Login(LoginRequestDto dto);
     Task Registrar(RegistroUsuarioDto dto);
+    Task<PerfilUsuarioDto> ObtenerPerfil(
+    int idUsuario);
 }

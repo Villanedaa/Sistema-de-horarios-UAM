@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Modelos.DTOs.Auth;
+using System.Security.Claims;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -37,5 +39,23 @@ public class AuthController : ControllerBase
             await _authService.Login(dto);
 
         return Ok(resultado);
+    }
+
+    [Authorize]
+    [HttpGet("perfil")]
+    public async Task<IActionResult> Perfil()
+    {
+        var idUsuario =
+            int.Parse(
+                User.FindFirst(
+                    ClaimTypes.NameIdentifier
+                )!.Value
+            );
+
+        var perfil =
+            await _authService
+                .ObtenerPerfil(idUsuario);
+
+        return Ok(perfil);
     }
 }
