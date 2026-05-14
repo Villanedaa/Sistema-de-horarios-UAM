@@ -1,6 +1,6 @@
 ﻿namespace SistemaHorarios.API.DTOs.Materias
 {
-    //Representa toda la información de una materia activa en el sistema.
+    //Representa toda la información de una materia en el sistema.
     public class MateriaResponse
     {
         public int IdMateria { get; set; }

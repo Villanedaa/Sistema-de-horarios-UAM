@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SistemaHorarios.Datos.Contexto;
+using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Logica.Negocio.Auth;
+using SistemaHorarios.Logica.Negocio.Materias;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,6 +65,14 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddScoped<PasswordService>();
+
+// Registra los repositorios del módulo de materias.
+builder.Services.AddScoped<MateriaRepository>();
+builder.Services.AddScoped<PrerrequisitoRepository>();
+
+// Registra los gestores del módulo de materias.
+builder.Services.AddScoped<GestorMateria>();
+builder.Services.AddScoped<GestorPrerrequisito>();
 
 var app = builder.Build();
 

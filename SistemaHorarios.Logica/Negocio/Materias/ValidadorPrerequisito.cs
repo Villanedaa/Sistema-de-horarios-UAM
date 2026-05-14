@@ -1,9 +1,4 @@
 ﻿using SistemaHorarios.Modelos.Entidades;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SistemaHorarios.Logica.Negocio.Materias
 {
@@ -66,7 +61,7 @@ namespace SistemaHorarios.Logica.Negocio.Materias
             );
         }
 
-        // Agrega un mensaje de error cuando una condición no se cumple.
+        // Agrega un error cuando se cumple una condición inválida.
         private void AgregarErrorSi(bool condicion, List<string> errores, string mensaje)
         {
             if (condicion)

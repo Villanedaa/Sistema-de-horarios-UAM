@@ -1,26 +1,30 @@
-﻿using SistemaHorarios.Modelos.Entidades;
+﻿using SistemaHorarios.Datos.Repositorios;
+using SistemaHorarios.Modelos.Entidades;
 
 namespace SistemaHorarios.Logica.Negocio.Materias
 {
-    // Gestiona las operaciones principales relacionadas con los prerrequisitos de materias.
+    // Gestiona las reglas de negocio relacionadas con prerrequisitos de materias.
     public class GestorPrerrequisito
     {
-        private readonly List<Prerrequisito> listaPrerrequisitos;
+        private readonly MateriaRepository materiaRepository;
+        private readonly PrerrequisitoRepository prerrequisitoRepository;
         private readonly ValidadorPrerrequisito validadorPrerrequisito;
-        private readonly GestorMateria gestorMateria;
 
-        // Inicializa el gestor con una lista temporal en memoria para pruebas.
-        public GestorPrerrequisito(GestorMateria gestorMateria)
+        // Recibe los repositorios necesarios para trabajar con base de datos.
+        public GestorPrerrequisito(
+            MateriaRepository materiaRepository,
+            PrerrequisitoRepository prerrequisitoRepository
+        )
         {
-            this.gestorMateria = gestorMateria;
-            listaPrerrequisitos = new List<Prerrequisito>();
+            this.materiaRepository = materiaRepository;
+            this.prerrequisitoRepository = prerrequisitoRepository;
             validadorPrerrequisito = new ValidadorPrerrequisito();
         }
 
-        // Agrega un prerrequisito a una materia.
-        public List<string> AgregarPrerrequisito(Prerrequisito prerrequisitoNuevo)
+        // Agrega un prerrequisito a una materia después de validar sus reglas.
+        public async Task<List<string>> AgregarPrerrequisitoAsync(Prerrequisito prerrequisitoNuevo)
         {
-            List<string> errores = ValidarCreacionPrerrequisito(prerrequisitoNuevo);
+            List<string> errores = await ValidarCreacionPrerrequisitoAsync(prerrequisitoNuevo);
 
             if (errores.Count > 0)
             {
@@ -28,53 +32,59 @@ namespace SistemaHorarios.Logica.Negocio.Materias
             }
 
             PrepararPrerrequisitoNuevo(prerrequisitoNuevo);
-            listaPrerrequisitos.Add(prerrequisitoNuevo);
+
+            await prerrequisitoRepository.CrearPrerrequisitoAsync(prerrequisitoNuevo);
 
             return errores;
         }
 
         // Consulta un prerrequisito por su identificador.
-        public Prerrequisito? ConsultarPrerrequisitoPorId(int idPrerrequisito)
+        public async Task<Prerrequisito?> ConsultarPrerrequisitoPorIdAsync(int idPrerrequisito)
         {
-            return listaPrerrequisitos.FirstOrDefault(
-                prerrequisito => prerrequisito.IdPrerrequisito == idPrerrequisito
-            );
+            if (idPrerrequisito <= 0)
+            {
+                return null;
+            }
+
+            return await prerrequisitoRepository.ObtenerPrerrequisitoPorIdAsync(idPrerrequisito);
         }
 
         // Lista todos los prerrequisitos registrados.
-        public List<Prerrequisito> ListarPrerrequisitos()
+        public async Task<List<Prerrequisito>> ListarPrerrequisitosAsync()
         {
-            return new List<Prerrequisito>(listaPrerrequisitos);
+            return await prerrequisitoRepository.ListarPrerrequisitosAsync();
         }
 
         // Lista los prerrequisitos activos asociados a una materia.
-        public List<Prerrequisito> ListarPrerrequisitosPorMateria(int idMateria)
+        public async Task<List<Prerrequisito>> ListarPrerrequisitosPorMateriaAsync(int idMateria)
         {
             if (idMateria <= 0)
             {
                 return new List<Prerrequisito>();
             }
 
-            return listaPrerrequisitos
-                .Where(prerrequisito =>
-                    prerrequisito.IdMateria == idMateria &&
-                    prerrequisito.Activo
-                )
-                .ToList();
+            return await prerrequisitoRepository.ListarPrerrequisitosPorMateriaAsync(idMateria);
         }
 
-        // Verifica si ya existe un prerrequisito activo entre dos materias.
-        public bool ExistePrerrequisitoEntreMaterias(int idMateria, int idMateriaPrerrequisito)
+        // Desactiva un prerrequisito sin eliminarlo físicamente.
+        public async Task<List<string>> DesactivarPrerrequisitoAsync(int idPrerrequisito)
         {
-            return listaPrerrequisitos.Any(prerrequisito =>
-                prerrequisito.IdMateria == idMateria &&
-                prerrequisito.IdMateriaPrerrequisito == idMateriaPrerrequisito &&
-                prerrequisito.Activo
-            );
+            List<string> errores = await ValidarDesactivacionPrerrequisitoAsync(idPrerrequisito);
+
+            if (errores.Count > 0)
+            {
+                return errores;
+            }
+
+            await prerrequisitoRepository.DesactivarPrerrequisitoAsync(idPrerrequisito);
+
+            return errores;
         }
 
         // Valida las reglas necesarias para agregar un prerrequisito.
-        private List<string> ValidarCreacionPrerrequisito(Prerrequisito prerrequisitoNuevo)
+        private async Task<List<string>> ValidarCreacionPrerrequisitoAsync(
+            Prerrequisito prerrequisitoNuevo
+        )
         {
             List<string> errores = validadorPrerrequisito.Validar(prerrequisitoNuevo);
 
@@ -83,74 +93,145 @@ namespace SistemaHorarios.Logica.Negocio.Materias
                 return errores;
             }
 
+            Materia? materiaPrincipal = await materiaRepository.ObtenerMateriaPorIdAsync(
+                prerrequisitoNuevo.IdMateria
+            );
+
+            Materia? materiaPrerrequisito = await materiaRepository.ObtenerMateriaPorIdAsync(
+                prerrequisitoNuevo.IdMateriaPrerrequisito
+            );
+
             AgregarErrorSi(
-                !ExisteMateriaRegistrada(prerrequisitoNuevo.IdMateria),
+                materiaPrincipal == null,
                 errores,
                 "La materia principal no existe."
             );
 
             AgregarErrorSi(
-                !ExisteMateriaRegistrada(prerrequisitoNuevo.IdMateriaPrerrequisito),
+                materiaPrerrequisito == null,
                 errores,
                 "La materia prerrequisito no existe."
             );
 
+            if (materiaPrincipal == null || materiaPrerrequisito == null)
+            {
+                return errores;
+            }
+
+            ValidarMateriasActivas(materiaPrincipal, materiaPrerrequisito, errores);
+            await ValidarPrerrequisitoDuplicadoAsync(prerrequisitoNuevo, errores);
+            await ValidarRelacionCircularDirectaAsync(prerrequisitoNuevo, errores);
+            ValidarSemestrePrerrequisito(materiaPrincipal, materiaPrerrequisito, errores);
+
+            return errores;
+        }
+
+        // Valida que ambas materias estén activas.
+        private void ValidarMateriasActivas(
+            Materia materiaPrincipal,
+            Materia materiaPrerrequisito,
+            List<string> errores
+        )
+        {
             AgregarErrorSi(
-                ExistePrerrequisitoEntreMaterias(
-                    prerrequisitoNuevo.IdMateria,
-                    prerrequisitoNuevo.IdMateriaPrerrequisito
-                ),
+                !materiaPrincipal.Activa,
                 errores,
-                "El prerrequisito ya está registrado para esta materia."
+                "La materia principal se encuentra inactiva."
             );
 
             AgregarErrorSi(
-                ExisteRelacionCircularDirecta(
-                    prerrequisitoNuevo.IdMateria,
-                    prerrequisitoNuevo.IdMateriaPrerrequisito
-                ),
+                !materiaPrerrequisito.Activa,
+                errores,
+                "La materia prerrequisito se encuentra inactiva."
+            );
+        }
+
+        // Valida que no exista el mismo prerrequisito activo.
+        private async Task ValidarPrerrequisitoDuplicadoAsync(
+            Prerrequisito prerrequisitoNuevo,
+            List<string> errores
+        )
+        {
+            bool existePrerrequisito = await prerrequisitoRepository.ExistePrerrequisitoActivoAsync(
+                prerrequisitoNuevo.IdMateria,
+                prerrequisitoNuevo.IdMateriaPrerrequisito
+            );
+
+            AgregarErrorSi(
+                existePrerrequisito,
+                errores,
+                "El prerrequisito ya está registrado para esta materia."
+            );
+        }
+
+        // Valida que no exista una relación circular directa.
+        private async Task ValidarRelacionCircularDirectaAsync(
+            Prerrequisito prerrequisitoNuevo,
+            List<string> errores
+        )
+        {
+            bool existeRelacionCircular = await prerrequisitoRepository.ExisteRelacionCircularDirectaAsync(
+                prerrequisitoNuevo.IdMateria,
+                prerrequisitoNuevo.IdMateriaPrerrequisito
+            );
+
+            AgregarErrorSi(
+                existeRelacionCircular,
                 errores,
                 "No se puede crear una relación circular directa entre materias."
+            );
+        }
+
+        // Valida que el prerrequisito pertenezca a un semestre anterior.
+        private void ValidarSemestrePrerrequisito(
+            Materia materiaPrincipal,
+            Materia materiaPrerrequisito,
+            List<string> errores
+        )
+        {
+            AgregarErrorSi(
+                materiaPrerrequisito.Semestre >= materiaPrincipal.Semestre,
+                errores,
+                "La materia prerrequisito debe pertenecer a un semestre anterior."
+            );
+        }
+
+        // Valida que el prerrequisito exista antes de desactivarlo.
+        private async Task<List<string>> ValidarDesactivacionPrerrequisitoAsync(int idPrerrequisito)
+        {
+            List<string> errores = new List<string>();
+
+            AgregarErrorSi(
+                idPrerrequisito <= 0,
+                errores,
+                "El identificador del prerrequisito no es válido."
+            );
+
+            if (errores.Count > 0)
+            {
+                return errores;
+            }
+
+            Prerrequisito? prerrequisito = await prerrequisitoRepository.ObtenerPrerrequisitoPorIdAsync(
+                idPrerrequisito
+            );
+
+            AgregarErrorSi(
+                prerrequisito == null,
+                errores,
+                "El prerrequisito que desea desactivar no existe."
             );
 
             return errores;
         }
 
-        // Verifica si una materia existe en el gestor de materias.
-        private bool ExisteMateriaRegistrada(int idMateria)
-        {
-            return gestorMateria.ConsultarMateriaPorId(idMateria) != null;
-        }
-
-        // Verifica si ya existe una relación inversa entre las mismas materias.
-        private bool ExisteRelacionCircularDirecta(int idMateria, int idMateriaPrerrequisito)
-        {
-            return listaPrerrequisitos.Any(prerrequisito =>
-                prerrequisito.IdMateria == idMateriaPrerrequisito &&
-                prerrequisito.IdMateriaPrerrequisito == idMateria &&
-                prerrequisito.Activo
-            );
-        }
-
-        // Asigna los valores iniciales necesarios para un prerrequisito nuevo.
+        // Prepara los valores iniciales de un prerrequisito nuevo.
         private void PrepararPrerrequisitoNuevo(Prerrequisito prerrequisitoNuevo)
         {
-            prerrequisitoNuevo.IdPrerrequisito = GenerarNuevoIdPrerrequisito();
             prerrequisitoNuevo.Activo = true;
         }
 
-        // Genera un identificador temporal para pruebas en memoria.
-        private int GenerarNuevoIdPrerrequisito()
-        {
-            if (listaPrerrequisitos.Count == 0)
-            {
-                return 1;
-            }
-
-            return listaPrerrequisitos.Max(prerrequisito => prerrequisito.IdPrerrequisito) + 1;
-        }
-
-        // Agrega un mensaje de error cuando una condición no se cumple.
+        // Agrega un error cuando una condición no se cumple.
         private void AgregarErrorSi(bool condicion, List<string> errores, string mensaje)
         {
             if (condicion)
