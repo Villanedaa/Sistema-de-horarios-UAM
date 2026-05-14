@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace SistemaHorarios.Logica.Negocio.Auth
 {
-    internal class Auth
+    internal class JwtService
     {
     }
 }
