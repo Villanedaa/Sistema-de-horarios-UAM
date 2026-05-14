@@ -70,6 +70,7 @@ public class AuthService : IAuthService
         LoginRequestDto dto)
     {
         var usuario = await _context.Usuarios
+            .Include(u => u.Rol)
             .FirstOrDefaultAsync(u =>
                 u.CorreoInstitucional ==
                 dto.CorreoInstitucional);
@@ -100,7 +101,7 @@ public class AuthService : IAuthService
             NombreCompleto =
                 usuario.NombreCompleto,
 
-            Rol = usuario.IdRol.ToString()
+            Rol = usuario.Rol.Nombre
         };
     }
 

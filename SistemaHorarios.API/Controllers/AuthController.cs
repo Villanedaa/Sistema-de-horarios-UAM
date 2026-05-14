@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Modelos.DTOs.Auth;
 using System.Security.Claims;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -24,11 +25,13 @@ public class AuthController : ControllerBase
     {
         await _authService.Registrar(dto);
 
-        return Ok(new
-        {
-            mensaje =
-                "Usuario registrado correctamente"
-        });
+        return Ok(
+            new ApiResponse<object>
+            {
+                Success = true,
+
+                Message ="Usuario registrado correctamente"
+            });
     }
 
     [HttpPost("login")]
@@ -38,7 +41,15 @@ public class AuthController : ControllerBase
         var resultado =
             await _authService.Login(dto);
 
-        return Ok(resultado);
+        return Ok(
+            new ApiResponse<LoginResponseDto>
+            {
+                Success = true,
+
+                Message = "Login exitoso",
+
+                Data = resultado
+            });
     }
 
     [Authorize]
@@ -56,6 +67,14 @@ public class AuthController : ControllerBase
             await _authService
                 .ObtenerPerfil(idUsuario);
 
-        return Ok(perfil);
+        return Ok(
+            new ApiResponse<PerfilUsuarioDto>
+            {
+                Success = true,
+
+                Message = "Perfil obtenido",
+
+                Data = perfil
+            });
     }
 }
