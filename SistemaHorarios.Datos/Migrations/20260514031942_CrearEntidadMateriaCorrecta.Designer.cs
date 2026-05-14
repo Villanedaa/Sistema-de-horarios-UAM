@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaHorarios.Datos.Contexto;
 
@@ -10,9 +11,11 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    partial class SistemaHorariosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514031942_CrearEntidadMateriaCorrecta")]
+    partial class CrearEntidadMateriaCorrecta
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,28 +55,6 @@ namespace SistemaHorarios.Datos.Migrations
                     b.HasKey("IdMateria");
 
                     b.ToTable("Materias");
-                });
-
-            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Prerrequisito", b =>
-                {
-                    b.Property<int>("IdPrerrequisito")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdPrerrequisito"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("IdMateria")
-                        .HasColumnType("int");
-
-                    b.Property<int>("IdMateriaPrerrequisito")
-                        .HasColumnType("int");
-
-                    b.HasKey("IdPrerrequisito");
-
-                    b.ToTable("Prerrequisitos");
                 });
 
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Rol", b =>

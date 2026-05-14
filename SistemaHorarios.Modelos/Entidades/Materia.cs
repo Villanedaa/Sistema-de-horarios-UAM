@@ -1,7 +1,12 @@
-﻿namespace SistemaHorarios.Modelos.Entidades;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SistemaHorarios.Modelos.Entidades;
 
 public class Materia
+
+    
 {
+    [Key]
     public int IdMateria { get; set; }
     public string Codigo { get; set; } = string.Empty;
     public string Nombre { get; set; } = string.Empty;

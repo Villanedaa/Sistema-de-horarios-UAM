@@ -14,5 +14,9 @@ namespace SistemaHorarios.Datos.Contexto
         public DbSet<Usuario> Usuarios { get; set; }
 
         public DbSet<Rol> Roles { get; set; }
+
+        public DbSet<Materia> Materias { get; set; }
+
+        public DbSet<Prerrequisito> Prerrequisitos { get; set; }
     }
 }

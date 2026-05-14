@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaHorarios.Datos.Contexto;
 
@@ -10,9 +11,11 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    partial class SistemaHorariosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514030437_CrearTablaMaterias")]
+    partial class CrearTablaMaterias
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -20,61 +23,6 @@ namespace SistemaHorarios.Datos.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Materia", b =>
-                {
-                    b.Property<int>("IdMateria")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdMateria"));
-
-                    b.Property<bool>("Activa")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Codigo")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("Creditos")
-                        .HasColumnType("int");
-
-                    b.Property<int>("IntensidadHorariaSemanal")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("Semestre")
-                        .HasColumnType("int");
-
-                    b.HasKey("IdMateria");
-
-                    b.ToTable("Materias");
-                });
-
-            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Prerrequisito", b =>
-                {
-                    b.Property<int>("IdPrerrequisito")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdPrerrequisito"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("IdMateria")
-                        .HasColumnType("int");
-
-                    b.Property<int>("IdMateriaPrerrequisito")
-                        .HasColumnType("int");
-
-                    b.HasKey("IdPrerrequisito");
-
-                    b.ToTable("Prerrequisitos");
-                });
 
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Rol", b =>
                 {
