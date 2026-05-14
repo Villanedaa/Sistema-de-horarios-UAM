@@ -3,27 +3,55 @@ using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Modelos.DTOs.Auth;
 using SistemaHorarios.Modelos.Entidades;
 
-
 namespace SistemaHorarios.Logica.Negocio.Auth;
 
+/// <summary>
+/// Servicio encargado de gestionar
+/// autenticación y autorización
+/// de usuarios.
+/// </summary>
 public class AuthService : IAuthService
 {
     private readonly SistemaHorariosDbContext _context;
+
     private readonly JwtService _jwtService;
+
     private readonly PasswordService _passwordService;
 
+    /// <summary>
+    /// Inicializa una nueva instancia
+    /// del servicio de autenticación.
+    /// </summary>
+    /// <param name="context">
+    /// Contexto Entity Framework Core.
+    /// </param>
+    /// <param name="jwtService">
+    /// Servicio encargado de generar JWT.
+    /// </param>
+    /// <param name="passwordService">
+    /// Servicio encargado de hash y validación
+    /// de contraseñas.
+    /// </param>
     public AuthService(
         SistemaHorariosDbContext context,
         JwtService jwtService,
         PasswordService passwordService)
     {
         _context = context;
+
         _jwtService = jwtService;
+
         _passwordService = passwordService;
     }
 
+    /// <summary>
+    /// Registra un nuevo usuario en el sistema.
+    /// </summary>
+    /// <param name="dto">
+    /// Información del usuario a registrar.
+    /// </param>
     public async Task Registrar(
-    RegistroUsuarioDto dto)
+        RegistroUsuarioDto dto)
     {
         var existeUsuario =
             await _context.Usuarios
@@ -66,6 +94,16 @@ public class AuthService : IAuthService
 
         await _context.SaveChangesAsync();
     }
+
+    /// <summary>
+    /// Valida credenciales de usuario y genera JWT.
+    /// </summary>
+    /// <param name="dto">
+    /// Credenciales usuario.
+    /// </param>
+    /// <returns>
+    /// Información autenticación y token JWT.
+    /// </returns>
     public async Task<LoginResponseDto> Login(
         LoginRequestDto dto)
     {
@@ -98,6 +136,7 @@ public class AuthService : IAuthService
         return new LoginResponseDto
         {
             Token = token,
+
             NombreCompleto =
                 usuario.NombreCompleto,
 
@@ -105,6 +144,15 @@ public class AuthService : IAuthService
         };
     }
 
+    /// <summary>
+    /// Obtiene información del usuario autenticado.
+    /// </summary>
+    /// <param name="idUsuario">
+    /// Identificador usuario.
+    /// </param>
+    /// <returns>
+    /// Información perfil usuario.
+    /// </returns>
     public async Task<PerfilUsuarioDto>
     ObtenerPerfil(int idUsuario)
     {

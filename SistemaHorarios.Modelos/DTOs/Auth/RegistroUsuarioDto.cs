@@ -2,6 +2,11 @@
 
 namespace SistemaHorarios.Modelos.DTOs.Auth;
 
+
+/// <summary>
+/// DTO utilizado para solicitudes
+/// de registro de usuario.
+/// </summary>
 public class RegistroUsuarioDto
 {
     [Required]
