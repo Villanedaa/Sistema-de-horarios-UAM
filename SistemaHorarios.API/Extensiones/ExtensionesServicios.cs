@@ -4,9 +4,13 @@ using SistemaHorarios.API.Politicas;
 using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Logica.Negocio.Auth;
+using SistemaHorarios.Logica.Negocio.FranjasHorarias.Interfaces;
+using SistemaHorarios.Logica.Negocio.FranjasHorarias.Servicios;
 using SistemaHorarios.Logica.Negocio.Materias;
 using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
 using SistemaHorarios.Logica.Negocio.Roles.Servicios;
+using SistemaHorarios.Logica.Negocio.FranjasHorarias.Interfaces;
+using SistemaHorarios.Logica.Negocio.FranjasHorarias.Servicios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -66,6 +70,14 @@ public static class ExtensionesServicios
         services.AddScoped<IRolService, RolService>();
 
         services.AddScoped<RolRepository>();
+
+        // Franjas horarias
+        services.AddScoped
+            <IFranjaHorariaService,
+             FranjaHorariaService>();
+
+        services.AddScoped
+            <FranjaHorariaRepository>();
 
         return services;
     }
