@@ -1,5 +1,7 @@
 using SistemaHorarios.API.Configuraciones;
 using SistemaHorarios.API.Extensions;
+using SistemaHorarios.Datos.Repositorios;
+using SistemaHorarios.Logica.Negocio.Usuario.Interface;
 
 // Punto de entrada principal de la aplicación.
 var builder = WebApplication.CreateBuilder(args);
@@ -8,7 +10,11 @@ var builder = WebApplication.CreateBuilder(args);
 // =========================
 // Controllers
 // =========================
+//usuarios 
 
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 // Registra los controladores de la API.
 builder.Services.AddControllers();
 

@@ -56,7 +56,8 @@ namespace SistemaHorarios.Datos.Contexto
         /// <summary>
         /// Representa la tabla Usuarios en la base de datos.
         /// </summary>
-        public DbSet<Usuario> Usuarios { get; set; }
+        //public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Usuario> Usuarios => Set<Usuario>();
 
         /// <summary>
         /// Representa la tabla Roles en la base de datos.

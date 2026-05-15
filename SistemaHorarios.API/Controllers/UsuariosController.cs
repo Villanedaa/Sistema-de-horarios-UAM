@@ -1,195 +1,131 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SistemaHorarios.Logica.Interface;
+using SistemaHorarios.Logica.Negocio.Usuario.Interface;
+using SistemaHorarios.Modelos.DTOs.Usuarios;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
-[Route("api/usuarios")]
+[Route("api/[controller]")]
 public class UsuariosController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult ObtenerUsuarios(
-        [FromQuery] string? busqueda,
-        [FromQuery] string? rol,
-        [FromQuery] string? estado)
+    private readonly IUsuarioService _usuarioService;
+
+    public UsuariosController(IUsuarioService usuarioService)
     {
-        var usuarios = new[]
-        {
-            new
-            {
-                IdUsuario = 1,
-                NombreCompleto = "Carlos Pérez",
-                Cedula = "123456789",
-                CorreoInstitucional = "carlos.perez@uam.edu.co",
-                Rol = "Coordinador",
-                Estado = "Activo"
-            },
-            new
-            {
-                IdUsuario = 2,
-                NombreCompleto = "Ana Gómez",
-                Cedula = "987654321",
-                CorreoInstitucional = "ana.gomez@uam.edu.co",
-                Rol = "Admin",
-                Estado = "Activo"
-            }
-        };
+        _usuarioService = usuarioService;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Crear(CrearUsuarioDto dto)
+    {
+        var usuario = await _usuarioService.CrearUsuarioAsync(dto);
+
+        return CreatedAtAction(
+            nameof(ObtenerPorId),
+            new { id = usuario.IdUsuario },
+            usuario);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> ObtenerPorId(int id)
+    {
+        var usuario = await _usuarioService.ObtenerPorIdAsync(id);
+
+        if (usuario == null)
+            return NotFound();
+
+        return Ok(usuario);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ObtenerTodos()
+    {
+        var usuarios = await _usuarioService.ObtenerTodosAsync();
 
         return Ok(usuarios);
     }
 
-    [HttpGet("{id}")]
-    public IActionResult ObtenerUsuarioPorId(int id)
-    {
-        return Ok(new
-        {
-            IdUsuario = id,
-            NombreCompleto = "Carlos Pérez",
-            Cedula = "123456789",
-            CorreoInstitucional = "carlos.perez@uam.edu.co",
-            Rol = "Coordinador",
-            Estado = "Activo"
-        });
-    }
-
-    [HttpPost]
-    public IActionResult CrearUsuario([FromBody] CrearUsuarioRequest request)
-    {
-        return Ok(new
-        {
-            IdUsuario = 3,
-            request.NombreCompleto,
-            request.Cedula,
-            request.CorreoInstitucional,
-            request.Rol,
-            request.Estado,
-            Mensaje = "Usuario creado correctamente."
-        });
-    }
-
     [HttpPut("{id}")]
-    public IActionResult ActualizarUsuario(int id, [FromBody] ActualizarUsuarioRequest request)
+    public async Task<IActionResult> Actualizar(
+        int id,
+        ActualizarUsuarioDto dto)
     {
-        return Ok(new
-        {
-            IdUsuario = id,
-            request.NombreCompleto,
-            request.Cedula,
-            request.CorreoInstitucional,
-            request.Rol,
-            request.Estado,
-            Mensaje = "Usuario actualizado correctamente."
-        });
+        var actualizado =
+            await _usuarioService.ActualizarUsuarioAsync(id, dto);
+
+        if (!actualizado)
+            return NotFound();
+
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public IActionResult EliminarUsuario(int id)
+    public async Task<IActionResult> Eliminar(int id)
     {
-        return Ok(new
-        {
-            IdUsuario = id,
-            Mensaje = "Usuario inactivado correctamente."
-        });
+        var eliminado = await _usuarioService.EliminarUsuarioAsync(id);
+
+        if (!eliminado)
+            return NotFound();
+
+        return NoContent();
     }
 
+    [Authorize]
     [HttpGet("perfil")]
-    public IActionResult ObtenerPerfil()
+    public async Task<IActionResult> Perfil()
     {
-        return Ok(new
-        {
-            IdUsuario = 2,
-            NombreCompleto = "Luis",
-            CorreoInstitucional = "coordinador@uam.edu.co",
-            Rol = "Coordinador",
-            Telefono = "345678910",
-            Programa = "Facultad de Ingeniería / Ingeniería de Sistemas"
-        });
+        var idUsuario =
+            int.Parse(User.FindFirst("id")!.Value);
+
+        var perfil =
+            await _usuarioService.ObtenerPerfilAsync(idUsuario);
+
+        return Ok(perfil);
     }
 
+    [Authorize]
     [HttpPut("perfil")]
-    public IActionResult ActualizarPerfil([FromBody] ActualizarPerfilRequest request)
+    public async Task<IActionResult> ActualizarPerfil(
+        ActualizarPerfilDto dto)
     {
-        return Ok(new
-        {
-            request.NombreCompleto,
-            request.Telefono,
-            Mensaje = "Perfil actualizado correctamente."
-        });
+        var idUsuario =
+            int.Parse(User.FindFirst("id")!.Value);
+
+        var actualizado =
+            await _usuarioService.ActualizarPerfilAsync(idUsuario, dto);
+
+        if (!actualizado)
+            return NotFound();
+
+        return NoContent();
     }
 
+    [Authorize]
     [HttpPut("cambiar-contrasena")]
-    public IActionResult CambiarContrasena([FromBody] CambiarContrasenaRequest request)
+    public async Task<IActionResult> CambiarContrasena(
+        CambiarContrasenaDto dto)
     {
-        return Ok(new
-        {
-            Mensaje = "Contraseña actualizada correctamente."
-        });
-    }
+        var idUsuario =
+            int.Parse(User.FindFirst("id")!.Value);
 
-    [HttpGet("roles")]
-    public IActionResult ObtenerRoles()
-    {
-        return Ok(new[]
-        {
-            "Admin",
-            "Coordinador"
-        });
-    }
+        var cambiado =
+            await _usuarioService.CambiarContrasenaAsync(idUsuario, dto);
 
-    [HttpGet("estados")]
-    public IActionResult ObtenerEstados()
-    {
-        return Ok(new[]
-        {
-            "Activo",
-            "Inactivo",
-            "Pendiente"
-        });
+        if (!cambiado)
+            return BadRequest();
+
+        return NoContent();
     }
 
     [HttpPost("verificar")]
-    public IActionResult VerificarUsuario([FromBody] VerificarUsuarioRequest request)
+    public async Task<IActionResult> Verificar(
+        VerificarUsuarioDto dto)
     {
-        return Ok(new
-        {
-            Existe = false,
-            Mensaje = "El usuario puede ser registrado."
-        });
+        var resultado =
+            await _usuarioService.VerificarUsuarioAsync(dto);
+
+        return Ok(resultado);
     }
-}
-
-public class CrearUsuarioRequest
-{
-    public string NombreCompleto { get; set; } = string.Empty;
-    public string Cedula { get; set; } = string.Empty;
-    public string CorreoInstitucional { get; set; } = string.Empty;
-    public string Rol { get; set; } = string.Empty;
-    public string Estado { get; set; } = string.Empty;
-}
-
-public class ActualizarUsuarioRequest
-{
-    public string NombreCompleto { get; set; } = string.Empty;
-    public string Cedula { get; set; } = string.Empty;
-    public string CorreoInstitucional { get; set; } = string.Empty;
-    public string Rol { get; set; } = string.Empty;
-    public string Estado { get; set; } = string.Empty;
-}
-
-public class ActualizarPerfilRequest
-{
-    public string NombreCompleto { get; set; } = string.Empty;
-    public string Telefono { get; set; } = string.Empty;
-}
-
-public class CambiarContrasenaRequest
-{
-    public string ContrasenaActual { get; set; } = string.Empty;
-    public string NuevaContrasena { get; set; } = string.Empty;
-    public string ConfirmarContrasena { get; set; } = string.Empty;
-}
-
-public class VerificarUsuarioRequest
-{
-    public string Cedula { get; set; } = string.Empty;
-    public string CorreoInstitucional { get; set; } = string.Empty;
 }
