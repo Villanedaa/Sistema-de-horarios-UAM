@@ -16,7 +16,4 @@ public class Materia
     public int Semestre { get; set; }
     public bool Activa { get; set; } = true;
 
-    [ForeignKey(nameof (IdPrerrequisito))]
-    public int IdPrerrequisito { get; set; }
-
 }
