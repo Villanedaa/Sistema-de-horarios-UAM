@@ -1,10 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace SistemaHorarios.Modelos.Entidades
 {
-    internal class SemestrePlan
+    public class SemestrePlan
     {
+        [Key]
+        public int IdSemestrePlan { get; set; }
+
+        public int IdPlanAcademico { get; set; }
+
+        public int NumeroSemestre { get; set; }
+
+        [ForeignKey(nameof(IdPlanAcademico))]
+        public PlanAcademico? PlanAcademico { get; set; }
     }
 }
