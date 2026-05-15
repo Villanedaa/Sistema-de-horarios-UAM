@@ -79,6 +79,7 @@ Capa encargada de exponer la API REST del sistema.
 
 - PoliticasAutorizacion
 
+<<<<<<< HEAD
 #### Extensions
 
 - ExtensionesServicios
