@@ -5,6 +5,8 @@ using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Logica.Negocio.Materias;
+using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
+using SistemaHorarios.Logica.Negocio.Roles.Servicios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -59,6 +61,11 @@ public static class ExtensionesServicios
         services.AddScoped<GestorMateria>();
 
         services.AddScoped<GestorPrerrequisito>();
+
+        // Roles
+        services.AddScoped<IRolService, RolService>();
+
+        services.AddScoped<RolRepository>();
 
         return services;
     }
