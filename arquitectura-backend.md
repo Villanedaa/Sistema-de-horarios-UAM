@@ -70,7 +70,6 @@ Responsable de:
 - validaciones
 - testing
 
-## Tecnologías
 
 - .NET 8
 - ASP.NET Core
