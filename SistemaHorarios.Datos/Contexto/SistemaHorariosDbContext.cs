@@ -73,5 +73,13 @@ namespace SistemaHorarios.Datos.Contexto
         /// en la base de datos.
         /// </summary>
         public DbSet<Prerrequisito> Prerrequisitos { get; set; }
+
+        /// <summary>
+        /// Representa la tabla FranjaHoraria en la base de datos.
+        /// </summary>
+
+        public DbSet<FranjaHoraria>
+    FranjasHorarias
+        { get; set; }
     }
 }
