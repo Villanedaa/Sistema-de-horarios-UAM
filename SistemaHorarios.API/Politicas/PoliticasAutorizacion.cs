@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using SistemaHorarios.Modelos.Constantes;
 
 namespace SistemaHorarios.API.Politicas;
 
@@ -10,26 +11,35 @@ public static class PoliticasAutorizacion
     {
         services.AddAuthorization(options =>
         {
+            // Política exclusiva para administradores
             options.AddPolicy(
                 "SoloAdministradores",
                 policy =>
                     policy.RequireRole(
-                        "Administrador"));
+                        RolesSistema.Administrador
+                    )
+            );
 
+            // Política para gestión de materias
             options.AddPolicy(
                 "GestionMaterias",
                 policy =>
                     policy.RequireRole(
-                        "Administrador",
-                        "Coordinador"));
+                        RolesSistema.Administrador,
+                        RolesSistema.Coordinador
+                    )
+            );
 
+            // Política para visualización de horarios
             options.AddPolicy(
                 "VerHorarios",
                 policy =>
                     policy.RequireRole(
-                        "Administrador",
-                        "Coordinador",
-                        "Docente"));
+                        RolesSistema.Administrador,
+                        RolesSistema.Coordinador,
+                        RolesSistema.Docente
+                    )
+            );
         });
 
         return services;

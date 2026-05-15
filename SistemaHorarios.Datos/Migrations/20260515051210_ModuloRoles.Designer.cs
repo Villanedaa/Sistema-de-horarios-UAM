@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaHorarios.Datos.Contexto;
 
@@ -10,9 +11,11 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    partial class SistemaHorariosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260515051210_ModuloRoles")]
+    partial class ModuloRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
