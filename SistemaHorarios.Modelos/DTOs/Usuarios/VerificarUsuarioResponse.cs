@@ -1,6 +1,8 @@
-﻿namespace SistemaHorarios.API.DTOs.Usuarios
+﻿namespace SistemaHorarios.Modelos.DTOs.Usuarios;
+
+public class VerificarUsuarioResponseDto
 {
-    public class VerificarUsuarioRequest
-    {
-    }
+    public bool ExisteCedula { get; set; }
+
+    public bool ExisteCorreo { get; set; }
 }

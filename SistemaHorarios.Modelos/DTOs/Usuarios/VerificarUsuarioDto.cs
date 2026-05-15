@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace SistemaHorarios.Modelos.DTOs.Usuarios;
 
-namespace SistemaHorarios.Modelos.DTOs.Usuarios
+public class VerificarUsuarioDto
 {
-    internal class VerificarUsuarioDto
-    {
-    }
+    public string? Cedula { get; set; }
+
+    public string? CorreoInstitucional { get; set; }
 }
