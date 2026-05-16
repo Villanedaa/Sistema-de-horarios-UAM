@@ -1,51 +1,27 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SistemaHorarios.Logica.Negocio.Dashboard.Interfaces;
+using SistemaHorarios.Modelos.DTOs.Dashboard;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
-[Route("api/dashboard")]
+[Route("api/[controller]")]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class DashboardController : ControllerBase
 {
-    [HttpGet("resumen")]
-    public IActionResult ObtenerResumen()
+    private readonly IDashboardService _dashboardService;
+
+    public DashboardController(IDashboardService dashboardService)
     {
-        var resumen = new
-        {
-            TotalMaterias = 50,
-            TotalDocentes = 50,
-            TotalGrupos = 19,
-            TotalHorarios = 19,
-            UltimosHorarios = new[]
-            {
-                new
-                {
-                    Nombre = "Horario_2026-01",
-                    Fecha = "2026-04-15",
-                    Jornada = "Nocturna",
-                    Grupos = 12,
-                    Semestre = 1,
-                    Estado = "Aprobado"
-                },
-                new
-                {
-                    Nombre = "Horario_2026-02",
-                    Fecha = "2026-04-16",
-                    Jornada = "Diurna",
-                    Grupos = 40,
-                    Semestre = 2,
-                    Estado = "Aprobado"
-                },
-                new
-                {
-                    Nombre = "Horario_2026-03",
-                    Fecha = "2026-04-18",
-                    Jornada = "Diurna",
-                    Grupos = 64,
-                    Semestre = 2,
-                    Estado = "Aprobado"
-                }
-            }
-        };
+        _dashboardService = dashboardService;
+    }
+
+    [HttpGet("resumen")]
+    public async Task<ActionResult<DashboardResumenDto>> ObtenerResumen()
+    {
+        var resumen =
+            await _dashboardService.ObtenerResumenAsync();
 
         return Ok(resumen);
     }
