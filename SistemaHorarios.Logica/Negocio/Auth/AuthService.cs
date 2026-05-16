@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Modelos.DTOs.Auth;
-using SistemaHorarios.Modelos.Entidades;
+using UsuarioEntidad = SistemaHorarios.Modelos.Entidades.Usuario;
 
 namespace SistemaHorarios.Logica.Negocio.Auth;
 
@@ -38,9 +38,7 @@ public class AuthService : IAuthService
         PasswordService passwordService)
     {
         _context = context;
-
         _jwtService = jwtService;
-
         _passwordService = passwordService;
     }
 
@@ -53,24 +51,35 @@ public class AuthService : IAuthService
     public async Task Registrar(
         RegistroUsuarioDto dto)
     {
-        var existeUsuario =
+        bool existeCorreo =
             await _context.Usuarios
                 .AnyAsync(u =>
                     u.CorreoInstitucional ==
                     dto.CorreoInstitucional);
 
-        if (existeUsuario)
+        if (existeCorreo)
         {
             throw new Exception(
-                "El usuario ya existe");
+                "El correo ya está registrado.");
         }
 
-        var passwordHash =
-            _passwordService.HashPassword(
-                dto.Contrasena
-            );
+        bool existeCedula =
+            await _context.Usuarios
+                .AnyAsync(u =>
+                    u.Cedula ==
+                    dto.Cedula);
 
-        var usuario = new Usuario
+        if (existeCedula)
+        {
+            throw new Exception(
+                "La cédula ya está registrada.");
+        }
+
+        string passwordHash =
+            _passwordService.HashPassword(
+                dto.Contrasena);
+
+        var usuario = new UsuarioEntidad
         {
             NombreCompleto =
                 dto.NombreCompleto,
@@ -87,7 +96,8 @@ public class AuthService : IAuthService
             IdRol =
                 dto.IdRol,
 
-            Estado = "Activo"
+            Estado =
+                "Activo"
         };
 
         _context.Usuarios.Add(usuario);
@@ -99,27 +109,28 @@ public class AuthService : IAuthService
     /// Valida credenciales de usuario y genera JWT.
     /// </summary>
     /// <param name="dto">
-    /// Credenciales usuario.
+    /// Credenciales del usuario.
     /// </param>
     /// <returns>
-    /// Información autenticación y token JWT.
+    /// Información de autenticación y token JWT.
     /// </returns>
     public async Task<LoginResponseDto> Login(
         LoginRequestDto dto)
     {
-        var usuario = await _context.Usuarios
-            .Include(u => u.Rol)
-            .FirstOrDefaultAsync(u =>
-                u.CorreoInstitucional ==
-                dto.CorreoInstitucional);
+        var usuario =
+            await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u =>
+                    u.CorreoInstitucional ==
+                    dto.CorreoInstitucional);
 
         if (usuario == null)
         {
             throw new Exception(
-                "Usuario no encontrado");
+                "Usuario no encontrado.");
         }
 
-        var passwordValida =
+        bool passwordValida =
             _passwordService.VerifyPassword(
                 dto.Contrasena,
                 usuario.ContrasenaHash);
@@ -127,20 +138,22 @@ public class AuthService : IAuthService
         if (!passwordValida)
         {
             throw new Exception(
-                "Contraseña incorrecta");
+                "Contraseña incorrecta.");
         }
 
-        var token =
+        string token =
             _jwtService.GenerarToken(usuario);
 
         return new LoginResponseDto
         {
-            Token = token,
+            Token =
+                token,
 
             NombreCompleto =
                 usuario.NombreCompleto,
 
-            Rol = usuario.Rol.Nombre
+            Rol =
+                usuario.Rol?.Nombre ?? string.Empty
         };
     }
 
@@ -148,29 +161,30 @@ public class AuthService : IAuthService
     /// Obtiene información del usuario autenticado.
     /// </summary>
     /// <param name="idUsuario">
-    /// Identificador usuario.
+    /// Identificador del usuario.
     /// </param>
     /// <returns>
-    /// Información perfil usuario.
+    /// Información del perfil del usuario.
     /// </returns>
-    public async Task<PerfilUsuarioDto>
-    ObtenerPerfil(int idUsuario)
+    public async Task<PerfilUsuarioDto> ObtenerPerfil(
+        int idUsuario)
     {
         var usuario =
             await _context.Usuarios
                 .Include(u => u.Rol)
-                .FirstOrDefaultAsync(
-                    u => u.IdUsuario == idUsuario);
+                .FirstOrDefaultAsync(u =>
+                    u.IdUsuario == idUsuario);
 
         if (usuario == null)
         {
             throw new Exception(
-                "Usuario no encontrado");
+                "Usuario no encontrado.");
         }
 
         return new PerfilUsuarioDto
         {
-            IdUsuario = usuario.IdUsuario,
+            IdUsuario =
+                usuario.IdUsuario,
 
             NombreCompleto =
                 usuario.NombreCompleto,
@@ -179,7 +193,7 @@ public class AuthService : IAuthService
                 usuario.CorreoInstitucional,
 
             Rol =
-                usuario.Rol.Nombre
+                usuario.Rol?.Nombre ?? string.Empty
         };
     }
 }
