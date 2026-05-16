@@ -1,5 +1,4 @@
 using SistemaHorarios.API.Configuraciones;
-using SistemaHorarios.API.Extensiones;
 using SistemaHorarios.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
