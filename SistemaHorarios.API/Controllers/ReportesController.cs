@@ -1,143 +1,64 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SistemaHorarios.Logica.Negocio.Reportes.Interfaces;
+using SistemaHorarios.Modelos.DTOs.Reportes;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
-[Route("api/reportes")]
+[Route("api/[controller]")]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class ReportesController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult ObtenerReportes([FromQuery] string? tipo, [FromQuery] string? fecha)
+    private readonly IReporteService _reporteService;
+
+    public ReportesController(IReporteService reporteService)
     {
-        return Ok(new[]
-        {
-            new
-            {
-                IdReporte = 1,
-                Fecha = "2026-04-21",
-                Tipo = "Carga docente",
-                Usuario = "admin",
-                Detalle = "Diurna",
-                FormatosDisponibles = new[] { "PDF", "CSV" }
-            },
-            new
-            {
-                IdReporte = 2,
-                Fecha = "2026-04-21",
-                Tipo = "Horarios generados",
-                Usuario = "coordinador",
-                Detalle = "Nocturna",
-                FormatosDisponibles = new[] { "PDF", "CSV" }
-            }
-        });
+        _reporteService = reporteService;
     }
 
-    [HttpGet("{id}")]
-    public IActionResult ObtenerReportePorId(int id)
+    [HttpGet("general")]
+    public async Task<ActionResult<ReporteGeneralDto>> ObtenerReporteGeneral()
     {
-        return Ok(new
-        {
-            IdReporte = id,
-            Fecha = "2026-04-21",
-            Tipo = "Carga docente",
-            Usuario = "admin",
-            Detalle = "Diurna",
-            FormatosDisponibles = new[] { "PDF", "CSV" }
-        });
+        var reporte =
+            await _reporteService.ObtenerReporteGeneralAsync();
+
+        return Ok(reporte);
     }
 
-    [HttpPost]
-    public IActionResult CrearReporte([FromBody] CrearReporteRequest request)
+    [HttpGet("usuarios-por-rol")]
+    public async Task<ActionResult<List<ReporteUsuariosPorRolDto>>> ObtenerUsuariosPorRol()
     {
-        return Ok(new
-        {
-            IdReporte = 3,
-            request.TipoReporte,
-            request.Periodo,
-            request.Fecha,
-            request.FormatoInicial,
-            request.Descripcion,
-            Mensaje = "Reporte generado correctamente."
-        });
+        var reporte =
+            await _reporteService.ObtenerUsuariosPorRolAsync();
+
+        return Ok(reporte);
     }
 
-    [HttpGet("{id}/vista-previa")]
-    public IActionResult ObtenerVistaPreviaReporte(int id)
+    [HttpGet("materias-por-semestre")]
+    public async Task<ActionResult<List<ReporteMateriasPorSemestreDto>>> ObtenerMateriasPorSemestre()
     {
-        return Ok(new
-        {
-            IdReporte = id,
-            TipoReporte = "CargaDocente",
-            Columnas = new[]
-            {
-                "Docente",
-                "Materia",
-                "Grupo",
-                "Jornada",
-                "Créditos",
-                "Rango"
-            },
-            Filas = new[]
-            {
-                new
-                {
-                    Docente = "Diana",
-                    Materia = "Ing. Software II",
-                    Grupo = "01",
-                    Jornada = "Diurna",
-                    Creditos = 3,
-                    Rango = "Lunes 10:00 - 12:00"
-                }
-            }
-        });
+        var reporte =
+            await _reporteService.ObtenerMateriasPorSemestreAsync();
+
+        return Ok(reporte);
     }
 
-    [HttpGet("{id}/descargar")]
-    public IActionResult DescargarReporte(int id, [FromQuery] string formato)
+    [HttpGet("franjas-por-dia")]
+    public async Task<ActionResult<List<ReporteFranjaHorariaDto>>> ObtenerFranjasPorDia()
     {
-        return Ok(new
-        {
-            IdReporte = id,
-            Formato = formato.ToUpper(),
-            UrlDescarga = $"/archivos/reportes/reporte-{id}.{formato.ToLower()}",
-            Mensaje = "Reporte descargado correctamente."
-        });
+        var reporte =
+            await _reporteService.ObtenerFranjasPorDiaAsync();
+
+        return Ok(reporte);
     }
 
-    [HttpGet("tipos")]
-    public IActionResult ObtenerTiposReporte()
+    [HttpGet("planes-academicos")]
+    public async Task<ActionResult<List<ReportePlanAcademicoDto>>> ObtenerPlanesAcademicos()
     {
-        return Ok(new[]
-        {
-            new
-            {
-                Codigo = "CargaDocente",
-                Nombre = "Carga docente"
-            },
-            new
-            {
-                Codigo = "HorariosGenerados",
-                Nombre = "Horarios generados"
-            },
-            new
-            {
-                Codigo = "AsignacionPorGrupo",
-                Nombre = "Asignación por grupo"
-            },
-            new
-            {
-                Codigo = "ConflictosHorario",
-                Nombre = "Conflictos de horario"
-            }
-        });
-    }
-}
+        var reporte =
+            await _reporteService.ObtenerPlanesAcademicosAsync();
 
-public class CrearReporteRequest
-{
-    public string TipoReporte { get; set; } = string.Empty;
-    public string Periodo { get; set; } = string.Empty;
-    public string Fecha { get; set; } = string.Empty;
-    public string FormatoInicial { get; set; } = string.Empty;
-    public string Descripcion { get; set; } = string.Empty;
+        return Ok(reporte);
+    }
 }
