@@ -16,6 +16,8 @@ using SistemaHorarios.Logica.Negocio.PlanAcademico.Interfaces;
 using SistemaHorarios.Logica.Negocio.PlanAcademico.Servicios;
 using SistemaHorarios.Logica.Negocio.Reportes.Interfaces;
 using SistemaHorarios.Logica.Negocio.Reportes.Servicios;
+using SistemaHorarios.Logica.Negocio.Dashboard.Interfaces;
+using SistemaHorarios.Logica.Negocio.Dashboard.Servicios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -77,6 +79,9 @@ public static class ExtensionesServicios
 
         // Reportes
         services.AddScoped<IReporteService, ReporteService>();
+
+        // Dashboard
+        services.AddScoped<IDashboardService, DashboardService>();
 
 
         return services;
