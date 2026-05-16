@@ -1,4 +1,5 @@
-﻿using SistemaHorarios.Datos.Repositorios;
+﻿using SistemaHorarios.Datos.Interfaces;
+using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Modelos.Entidades;
 
 namespace SistemaHorarios.Logica.Negocio.Grupos;
@@ -7,12 +8,16 @@ namespace SistemaHorarios.Logica.Negocio.Grupos;
 public class GestorGrupo
 {
     private readonly GrupoRepository grupoRepository;
+    private readonly IPlanAcademicoRepository planAcademicoRepository;
     private readonly ValidadorGrupo validadorGrupo;
 
-    // Recibe el repositorio de grupos para trabajar con base de datos.
-    public GestorGrupo(GrupoRepository grupoRepository)
+    // Recibe los repositorios necesarios para trabajar con grupos.
+    public GestorGrupo(
+        GrupoRepository grupoRepository,
+        IPlanAcademicoRepository planAcademicoRepository)
     {
         this.grupoRepository = grupoRepository;
+        this.planAcademicoRepository = planAcademicoRepository;
         validadorGrupo = new ValidadorGrupo();
     }
 
@@ -192,7 +197,7 @@ public class GestorGrupo
         await ValidarCodigoDuplicadoAsync(grupo.Codigo, errores, idGrupoExcluir);
         ValidarJornadaPermitida(grupo.Jornada, errores);
         ValidarTipoGrupoPermitido(grupo.TipoGrupo, errores);
-        ValidarPlanAcademicoTemporal(grupo.IdPlanAcademico, errores);
+        await ValidarPlanAcademicoExistenteAsync(grupo.IdPlanAcademico, errores);
     }
 
     // Valida que no exista otro grupo con el mismo código.
@@ -242,13 +247,18 @@ public class GestorGrupo
         );
     }
 
-    // Validación temporal hasta conectar el módulo de plan académico.
-    private void ValidarPlanAcademicoTemporal(int idPlanAcademico, List<string> errores)
+    // Valida que el plan académico asociado exista.
+    private async Task ValidarPlanAcademicoExistenteAsync(
+        int idPlanAcademico,
+        List<string> errores)
     {
+        SistemaHorarios.Modelos.Entidades.PlanAcademico? planAcademico =
+            await planAcademicoRepository.ObtenerPorIdAsync(idPlanAcademico);
+
         AgregarErrorSi(
-            idPlanAcademico <= 0,
+            planAcademico == null,
             errores,
-            "El plan académico asociado no es válido."
+            "El plan académico asociado no existe."
         );
     }
 
