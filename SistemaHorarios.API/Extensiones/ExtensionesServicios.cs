@@ -11,6 +11,8 @@ using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
 using SistemaHorarios.Logica.Negocio.Roles.Servicios;
 using SistemaHorarios.Logica.Negocio.Usuario.Interface;
 using SistemaHorarios.Logica.Negocio.Usuario.Servicios;
+using SistemaHorarios.Logica.Negocio.PlanAcademico.Interfaces;
+using SistemaHorarios.Logica.Negocio.PlanAcademico.Servicios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -59,6 +61,10 @@ public static class ExtensionesServicios
         // Franjas horarias
         services.AddScoped<IFranjaHorariaService, FranjaHorariaService>();
         services.AddScoped<FranjaHorariaRepository>();
+
+        // Plan académico
+        services.AddScoped<IPlanAcademicoService, PlanAcademicoService>();
+        services.AddScoped<IPlanAcademicoRepository, PlanAcademicoRepository>();
 
         return services;
     }

@@ -1,6 +1,6 @@
 ﻿namespace SistemaHorarios.API.DTOs.PlanAcademico
 {
-    public class CrearPlanAcademicoRequest
+    public class ActualizarSemestrePlanRequestDto
     {
     }
 }
