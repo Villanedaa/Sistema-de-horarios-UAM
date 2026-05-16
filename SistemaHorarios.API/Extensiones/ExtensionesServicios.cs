@@ -12,6 +12,10 @@ using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
 using SistemaHorarios.Logica.Negocio.Roles.Servicios;
 using SistemaHorarios.Logica.Negocio.Usuario.Interface;
 using SistemaHorarios.Logica.Negocio.Usuario.Servicios;
+using SistemaHorarios.Logica.Negocio.PlanAcademico.Interfaces;
+using SistemaHorarios.Logica.Negocio.PlanAcademico.Servicios;
+using SistemaHorarios.Logica.Negocio.Reportes.Interfaces;
+using SistemaHorarios.Logica.Negocio.Reportes.Servicios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -66,6 +70,14 @@ public static class ExtensionesServicios
 
         // Gestores de grupos
         services.AddScoped<GestorGrupo>();
+
+        // Plan académico
+        services.AddScoped<IPlanAcademicoService, PlanAcademicoService>();
+        services.AddScoped<IPlanAcademicoRepository, PlanAcademicoRepository>();
+
+        // Reportes
+        services.AddScoped<IReporteService, ReporteService>();
+
 
         return services;
     }
