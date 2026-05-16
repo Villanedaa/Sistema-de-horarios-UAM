@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using SistemaHorarios.Modelos.Entidades;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using UsuarioEntidad = SistemaHorarios.Modelos.Entidades.Usuario;
 
 namespace SistemaHorarios.Logica.Negocio.Auth;
 
@@ -14,6 +14,7 @@ namespace SistemaHorarios.Logica.Negocio.Auth;
 public class JwtService
 {
     private readonly IConfiguration _configuration;
+
     /// <summary>
     /// Inicializa una nueva instancia del servicio JWT.
     /// </summary>
@@ -24,6 +25,7 @@ public class JwtService
     {
         _configuration = configuration;
     }
+
     /// <summary>
     /// Genera un token JWT para el usuario autenticado.
     /// </summary>
@@ -33,11 +35,13 @@ public class JwtService
     /// <returns>
     /// Token JWT serializado.
     /// </returns>
-
-    public string GenerarToken(Usuario usuario)
+    public string GenerarToken(UsuarioEntidad usuario)
     {
         var jwtSettings =
             _configuration.GetSection("Jwt");
+
+        var nombreRol =
+            usuario.Rol?.Nombre ?? string.Empty;
 
         var claims = new[]
         {
@@ -55,7 +59,7 @@ public class JwtService
 
             new Claim(
                 ClaimTypes.Role,
-                usuario.Rol.Nombre)
+                nombreRol)
         };
 
         var key =

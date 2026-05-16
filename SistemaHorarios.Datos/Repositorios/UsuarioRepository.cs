@@ -40,26 +40,34 @@ public class UsuarioRepository : IUsuarioRepository
     {
         _context.Usuarios.Update(usuario);
 
-        return await _context.SaveChangesAsync() > 0;
+        int filasAfectadas =
+            await _context.SaveChangesAsync();
+
+        return filasAfectadas > 0;
     }
 
     public async Task<bool> EliminarAsync(Usuario usuario)
     {
         _context.Usuarios.Remove(usuario);
 
-        return await _context.SaveChangesAsync() > 0;
+        int filasAfectadas =
+            await _context.SaveChangesAsync();
+
+        return filasAfectadas > 0;
     }
 
     public async Task<bool> ExisteCorreoAsync(string correo)
     {
         return await _context.Usuarios
-            .AnyAsync(u => u.CorreoInstitucional == correo);
+            .AnyAsync(u =>
+                u.CorreoInstitucional == correo);
     }
 
     public async Task<bool> ExisteCedulaAsync(string cedula)
     {
         return await _context.Usuarios
-            .AnyAsync(u => u.Cedula == cedula);
+            .AnyAsync(u =>
+                u.Cedula == cedula);
     }
 
     public async Task GuardarCambiosAsync()

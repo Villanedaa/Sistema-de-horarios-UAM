@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SistemaHorarios.Logica.Interface;
 using SistemaHorarios.Logica.Negocio.Usuario.Interface;
 using SistemaHorarios.Modelos.DTOs.Usuarios;
+using System.Security.Claims;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -17,115 +17,170 @@ public class UsuariosController : ControllerBase
         _usuarioService = usuarioService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Crear(CrearUsuarioDto dto)
-    {
-        var usuario = await _usuarioService.CrearUsuarioAsync(dto);
-
-        return CreatedAtAction(
-            nameof(ObtenerPorId),
-            new { id = usuario.IdUsuario },
-            usuario);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> ObtenerPorId(int id)
-    {
-        var usuario = await _usuarioService.ObtenerPorIdAsync(id);
-
-        if (usuario == null)
-            return NotFound();
-
-        return Ok(usuario);
-    }
-
     [HttpGet]
-    public async Task<IActionResult> ObtenerTodos()
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult<IEnumerable<UsuarioResponseDto>>> ObtenerTodos()
     {
-        var usuarios = await _usuarioService.ObtenerTodosAsync();
+        var usuarios =
+            await _usuarioService.ObtenerTodosAsync();
 
         return Ok(usuarios);
     }
 
+    [HttpGet("{id}")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult<UsuarioResponseDto>> ObtenerPorId(int id)
+    {
+        var usuario =
+            await _usuarioService.ObtenerPorIdAsync(id);
+
+        if (usuario == null)
+        {
+            return NotFound("Usuario no encontrado.");
+        }
+
+        return Ok(usuario);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult<UsuarioResponseDto>> Crear(
+        CrearUsuarioDto dto)
+    {
+        var usuarioCreado =
+            await _usuarioService.CrearUsuarioAsync(dto);
+
+        return Ok(usuarioCreado);
+    }
+
     [HttpPut("{id}")]
-    public async Task<IActionResult> Actualizar(
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult> Actualizar(
         int id,
         ActualizarUsuarioDto dto)
     {
-        var actualizado =
+        bool actualizado =
             await _usuarioService.ActualizarUsuarioAsync(id, dto);
 
         if (!actualizado)
-            return NotFound();
+        {
+            return NotFound("Usuario no encontrado.");
+        }
 
-        return NoContent();
+        return Ok("Usuario actualizado correctamente.");
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Eliminar(int id)
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult> Eliminar(int id)
     {
-        var eliminado = await _usuarioService.EliminarUsuarioAsync(id);
+        bool eliminado =
+            await _usuarioService.EliminarUsuarioAsync(id);
 
         if (!eliminado)
-            return NotFound();
+        {
+            return NotFound("Usuario no encontrado.");
+        }
 
-        return NoContent();
+        return Ok("Usuario eliminado correctamente.");
     }
 
-    [Authorize]
     [HttpGet("perfil")]
-    public async Task<IActionResult> Perfil()
+    [Authorize]
+    public async Task<ActionResult<UsuarioResponseDto>> ObtenerPerfil()
     {
-        var idUsuario =
-            int.Parse(User.FindFirst("id")!.Value);
+        int? idUsuario =
+            ObtenerIdUsuarioDesdeToken();
+
+        if (idUsuario == null)
+        {
+            return Unauthorized("Token inválido.");
+        }
 
         var perfil =
-            await _usuarioService.ObtenerPerfilAsync(idUsuario);
+            await _usuarioService.ObtenerPerfilAsync(idUsuario.Value);
+
+        if (perfil == null)
+        {
+            return NotFound("Usuario no encontrado.");
+        }
 
         return Ok(perfil);
     }
 
-    [Authorize]
     [HttpPut("perfil")]
-    public async Task<IActionResult> ActualizarPerfil(
+    [Authorize]
+    public async Task<ActionResult> ActualizarPerfil(
         ActualizarPerfilDto dto)
     {
-        var idUsuario =
-            int.Parse(User.FindFirst("id")!.Value);
+        int? idUsuario =
+            ObtenerIdUsuarioDesdeToken();
 
-        var actualizado =
-            await _usuarioService.ActualizarPerfilAsync(idUsuario, dto);
+        if (idUsuario == null)
+        {
+            return Unauthorized("Token inválido.");
+        }
+
+        bool actualizado =
+            await _usuarioService.ActualizarPerfilAsync(
+                idUsuario.Value,
+                dto);
 
         if (!actualizado)
-            return NotFound();
+        {
+            return NotFound("Usuario no encontrado.");
+        }
 
-        return NoContent();
+        return Ok("Perfil actualizado correctamente.");
     }
 
-    [Authorize]
     [HttpPut("cambiar-contrasena")]
-    public async Task<IActionResult> CambiarContrasena(
+    [Authorize]
+    public async Task<ActionResult> CambiarContrasena(
         CambiarContrasenaDto dto)
     {
-        var idUsuario =
-            int.Parse(User.FindFirst("id")!.Value);
+        int? idUsuario =
+            ObtenerIdUsuarioDesdeToken();
 
-        var cambiado =
-            await _usuarioService.CambiarContrasenaAsync(idUsuario, dto);
+        if (idUsuario == null)
+        {
+            return Unauthorized("Token inválido.");
+        }
 
-        if (!cambiado)
-            return BadRequest();
+        bool actualizada =
+            await _usuarioService.CambiarContrasenaAsync(
+                idUsuario.Value,
+                dto);
 
-        return NoContent();
+        if (!actualizada)
+        {
+            return BadRequest(
+                "No se pudo cambiar la contraseña. Verifica la contraseña actual.");
+        }
+
+        return Ok("Contraseña actualizada correctamente.");
     }
 
     [HttpPost("verificar")]
-    public async Task<IActionResult> Verificar(
+    public async Task<ActionResult<VerificarUsuarioResponseDto>> VerificarUsuario(
         VerificarUsuarioDto dto)
     {
         var resultado =
             await _usuarioService.VerificarUsuarioAsync(dto);
 
         return Ok(resultado);
+    }
+
+    private int? ObtenerIdUsuarioDesdeToken()
+    {
+        var idUsuarioTexto =
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (!int.TryParse(idUsuarioTexto, out int idUsuario))
+        {
+            return null;
+        }
+
+        return idUsuario;
     }
 }
