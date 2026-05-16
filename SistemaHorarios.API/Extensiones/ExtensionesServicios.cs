@@ -6,6 +6,7 @@ using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Logica.Negocio.FranjasHorarias.Interfaces;
 using SistemaHorarios.Logica.Negocio.FranjasHorarias.Servicios;
+using SistemaHorarios.Logica.Negocio.Grupos;
 using SistemaHorarios.Logica.Negocio.Materias;
 using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
 using SistemaHorarios.Logica.Negocio.Roles.Servicios;
@@ -59,6 +60,12 @@ public static class ExtensionesServicios
         // Franjas horarias
         services.AddScoped<IFranjaHorariaService, FranjaHorariaService>();
         services.AddScoped<FranjaHorariaRepository>();
+
+        //Grupos
+        services.AddScoped<GrupoRepository>();
+
+        // Gestores de grupos
+        services.AddScoped<GestorGrupo>();
 
         return services;
     }
