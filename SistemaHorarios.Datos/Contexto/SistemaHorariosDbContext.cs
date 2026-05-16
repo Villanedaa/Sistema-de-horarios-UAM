@@ -21,6 +21,9 @@ public class SistemaHorariosDbContext : DbContext
 
     public DbSet<FranjaHoraria> FranjasHorarias { get; set; }
 
+    public DbSet<Docente> Docentes { get; set; }
+
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

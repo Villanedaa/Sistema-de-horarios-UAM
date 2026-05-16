@@ -1,12 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SistemaHorarios.Modelos.DTOs.Docentes;
 
-namespace SistemaHorarios.Logica.Negocio.Docentes
+namespace SistemaHorarios.Logica.Negocio.Docentes;
+
+public interface IGestorDocente
 {
-    internal class Docentes
-    {
-    }
+    Task<List<DocenteResponse>> ObtenerTodosAsync();
+
+    Task<DocenteResponse?> ObtenerPorIdAsync(int id);
+
+    Task<DocenteResponse> CrearAsync(DocenteRequest dto);
+
+    Task ActualizarAsync(int id, DocenteRequest dto);
+
+    Task EliminarAsync(int id);
 }
