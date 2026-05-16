@@ -21,11 +21,19 @@ public class SistemaHorariosDbContext : DbContext
 
     public DbSet<FranjaHoraria> FranjasHorarias { get; set; }
 
+    public DbSet<PlanAcademico> PlanesAcademicos { get; set; }
+
+    public DbSet<SemestrePlan> SemestresPlan { get; set; }
+
+    public DbSet<MateriaPlan> MateriasPlan { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         ConfigurarUsuario(modelBuilder);
+
+        ConfigurarPlanAcademico(modelBuilder);
 
         ConfigurarRoles(modelBuilder);
     }
@@ -36,6 +44,51 @@ public class SistemaHorariosDbContext : DbContext
             .HasOne(usuario => usuario.Rol)
             .WithMany()
             .HasForeignKey(usuario => usuario.IdRol);
+    }
+
+    private void ConfigurarPlanAcademico(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<PlanAcademico>()
+            .HasKey(plan => plan.IdPlanAcademico);
+
+        modelBuilder.Entity<SemestrePlan>()
+            .HasKey(semestre => semestre.IdSemestrePlan);
+
+        modelBuilder.Entity<MateriaPlan>()
+            .HasKey(materiaPlan => materiaPlan.IdMateriaPlan);
+
+        modelBuilder.Entity<SemestrePlan>()
+            .HasOne(semestre => semestre.PlanAcademico)
+            .WithMany(plan => plan.Semestres)
+            .HasForeignKey(semestre => semestre.IdPlanAcademico);
+
+        modelBuilder.Entity<MateriaPlan>()
+            .HasOne(materiaPlan => materiaPlan.SemestrePlan)
+            .WithMany(semestre => semestre.MateriasPlan)
+            .HasForeignKey(materiaPlan => materiaPlan.IdSemestrePlan);
+
+        modelBuilder.Entity<MateriaPlan>()
+            .HasOne(materiaPlan => materiaPlan.Materia)
+            .WithMany()
+            .HasForeignKey(materiaPlan => materiaPlan.IdMateria);
+
+        modelBuilder.Entity<SemestrePlan>()
+            .HasIndex(semestre =>
+                new
+                {
+                    semestre.IdPlanAcademico,
+                    semestre.NumeroSemestre
+                })
+            .IsUnique();
+
+        modelBuilder.Entity<MateriaPlan>()
+            .HasIndex(materiaPlan =>
+                new
+                {
+                    materiaPlan.IdSemestrePlan,
+                    materiaPlan.IdMateria
+                })
+            .IsUnique();
     }
 
     private void ConfigurarRoles(ModelBuilder modelBuilder)

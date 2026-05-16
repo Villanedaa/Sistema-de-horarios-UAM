@@ -1,18 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿namespace SistemaHorarios.Modelos.Entidades;
 
-namespace SistemaHorarios.Modelos.Entidades
+public class PlanAcademico
 {
-    public class PlanAcademico
-    {
-        [Key]
-        public int IdPlanAcademico { get; set; }
+    public int IdPlanAcademico { get; set; }
 
-        public string Nombre { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
 
-        public string Jornada { get; set; } = string.Empty;
+    public string Programa { get; set; } = string.Empty;
 
-        public int CantidadSemestres { get; set; }
+    public int Anio { get; set; }
 
-        public bool Activo { get; set; } = true;
-    }
+    public string Estado { get; set; } = "Activo";
+
+    public ICollection<SemestrePlan> Semestres { get; set; } =
+        new List<SemestrePlan>();
 }

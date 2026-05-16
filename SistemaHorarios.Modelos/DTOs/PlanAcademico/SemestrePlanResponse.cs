@@ -1,6 +1,11 @@
-﻿namespace SistemaHorarios.API.DTOs.PlanAcademico
+﻿namespace SistemaHorarios.Modelos.DTOs.PlanAcademico;
+
+public class SemestrePlanResponseDto
 {
-    public class SemestrePlanResponse
-    {
-    }
+    public int IdSemestrePlan { get; set; }
+
+    public int NumeroSemestre { get; set; }
+
+    public List<MateriaPlanResponseDto> Materias { get; set; } =
+        new List<MateriaPlanResponseDto>();
 }
