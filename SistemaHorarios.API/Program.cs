@@ -22,6 +22,23 @@ builder.Services.RegistrarServicios();
 // Políticas de autorización
 builder.Services.ConfigurarPoliticas();
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("PermitirFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5000",
+                "https://localhost:5001",
+                "http://localhost:5173",
+                "http://localhost:4200"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // Pipeline HTTP
