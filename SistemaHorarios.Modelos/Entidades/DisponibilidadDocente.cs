@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.ComponentModel.DataAnnotations;
+
 
 namespace SistemaHorarios.Modelos.Entidades;
 
 public class DisponibilidadDocente
 {
+    [Key]
     public int IdDisponibilidadDocente { get; set; }
     public int IdDocente { get; set; }
     public string Dia { get; set; } = string.Empty;
