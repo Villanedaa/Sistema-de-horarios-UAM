@@ -19,6 +19,7 @@ using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
 using SistemaHorarios.Logica.Negocio.Roles.Servicios;
 using SistemaHorarios.Logica.Negocio.Usuario.Interface;
 using SistemaHorarios.Logica.Negocio.Usuario.Servicios;
+using SistemaHorarios.Logica.Negocio.Horarios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -89,6 +90,10 @@ public static class ExtensionesServicios
         services.AddScoped<IDocenteRepository, DocenteRepository>();
 
         services.AddScoped<IGestorDocente, GestorDocente>();
+
+        //Horarios
+        services.AddScoped<GestorHorario>();
+        services.AddScoped<HorarioRepository>();
 
         return services;
     }

@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using SistemaHorarios.Logica.Negocio.Horarios;
+using SistemaHorarios.Modelos.DTOs.Horarios;
+using HorarioEntidad = SistemaHorarios.Modelos.Entidades.Horario;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -6,350 +9,321 @@ namespace SistemaHorarios.API.Controllers;
 [Route("api/horarios")]
 public class HorariosController : ControllerBase
 {
+    private readonly GestorHorario gestorHorario;
+
+    // Recibe el gestor de horarios para aplicar reglas de negocio.
+    public HorariosController(GestorHorario gestorHorario)
+    {
+        this.gestorHorario = gestorHorario;
+    }
+
+    // Lista todos los horarios registrados.
     [HttpGet]
-    public IActionResult ObtenerHorarios()
+    public async Task<ActionResult<List<HorarioResponse>>> ObtenerHorarios()
     {
-        return Ok(new[]
-        {
-            new
-            {
-                IdHorario = 1,
-                IdGrupo = 7,
-                HoraInicio = "14:00",
-                HoraFinal = "16:00",
-                Dia = "Lunes",
-                Jornada = "Diurna",
-                Estado = "Generado"
-            },
-            new
-            {
-                IdHorario = 2,
-                IdGrupo = 8,
-                HoraInicio = "08:00",
-                HoraFinal = "10:00",
-                Dia = "Martes",
-                Jornada = "Nocturna",
-                Estado = "Generado"
-            }
-        });
+        List<HorarioEntidad> horarios =
+            await gestorHorario.ListarHorariosAsync();
+
+        List<HorarioResponse> respuesta = horarios
+            .Select(MapearHorarioResponse)
+            .ToList();
+
+        return Ok(respuesta);
     }
 
+    // Consulta un horario por su identificador.
     [HttpGet("{id}")]
-    public IActionResult ObtenerHorarioPorId(int id)
+    public async Task<ActionResult<HorarioResponse>> ObtenerHorarioPorId(int id)
     {
+        HorarioEntidad? horario =
+            await gestorHorario.ConsultarHorarioPorIdAsync(id);
+
+        if (horario == null)
+        {
+            return NotFound("El horario no existe.");
+        }
+
+        return Ok(MapearHorarioResponse(horario));
+    }
+
+    // Crea una nueva asignación de horario.
+    [HttpPost]
+    public async Task<IActionResult> CrearHorario(
+        [FromBody] GenerarHorarioRequest request)
+    {
+        HorarioEntidad horario = new HorarioEntidad
+        {
+            IdGrupo = request.IdGrupo,
+            IdMateria = request.IdMateria,
+            IdDocente = request.IdDocente,
+            IdFranjaHoraria = request.IdFranjaHoraria,
+            Observacion = request.Observacion
+        };
+
+        List<string> errores =
+            await gestorHorario.CrearHorarioAsync(horario);
+
+        if (errores.Count > 0)
+        {
+            return BadRequest(errores);
+        }
+
+        HorarioEntidad? horarioCreado =
+            await gestorHorario.ConsultarHorarioPorIdAsync(horario.IdHorario);
+
         return Ok(new
         {
-            IdHorario = id,
-            IdGrupo = 7,
-            Grupo = "Grupo 15-D-01",
-            Materia = "Bases de Datos",
-            Docente = "Lina Gómez",
-            HoraInicio = "14:00",
-            HoraFinal = "16:00",
-            Dia = "Lunes",
-            Jornada = "Diurna",
-            Estado = "Generado"
+            Mensaje = "Horario creado correctamente.",
+            Horario = horarioCreado == null
+                ? MapearHorarioResponse(horario)
+                : MapearHorarioResponse(horarioCreado)
         });
     }
 
-    [HttpPost("generar")]
-    public IActionResult GenerarHorario([FromBody] GenerarHorarioRequest request)
-    {
-        return Ok(new
-        {
-            IdHorario = 1,
-            request.HoraInicio,
-            request.HoraFinal,
-            request.DuracionBloque,
-            request.Dias,
-            Estado = "Generado",
-            Mensaje = "Horario generado correctamente."
-        });
-    }
-
+    // Actualiza una asignación de horario existente.
     [HttpPut("{id}")]
-    public IActionResult ActualizarHorario(int id, [FromBody] ActualizarHorarioRequest request)
+    public async Task<IActionResult> ActualizarHorario(
+        int id,
+        [FromBody] ActualizarHorarioRequest request)
     {
+        HorarioEntidad horario = new HorarioEntidad
+        {
+            IdGrupo = request.IdGrupo,
+            IdMateria = request.IdMateria,
+            IdDocente = request.IdDocente,
+            IdFranjaHoraria = request.IdFranjaHoraria,
+            Observacion = request.Observacion,
+            Activo = request.Activo
+        };
+
+        List<string> errores =
+            await gestorHorario.ModificarHorarioAsync(id, horario);
+
+        if (errores.Count > 0)
+        {
+            return BadRequest(errores);
+        }
+
+        HorarioEntidad? horarioActualizado =
+            await gestorHorario.ConsultarHorarioPorIdAsync(id);
+
+        if (horarioActualizado == null)
+        {
+            return NotFound("El horario no existe.");
+        }
+
         return Ok(new
         {
-            IdHorario = id,
-            request.IdGrupo,
-            request.IdMateria,
-            request.IdDocente,
-            request.Dia,
-            request.HoraInicio,
-            request.HoraFinal,
-            request.Jornada,
-            request.Estado,
-            Mensaje = "Horario actualizado correctamente."
+            Mensaje = "Horario actualizado correctamente.",
+            Horario = MapearHorarioResponse(horarioActualizado)
         });
     }
 
+    // Actualiza solo la materia, docente y franja de un horario.
     [HttpPut("{id}/asignatura")]
-    public IActionResult ActualizarAsignaturaHorario(
+    public async Task<IActionResult> ActualizarAsignaturaHorario(
         int id,
         [FromBody] ActualizarAsignaturaHorarioRequest request)
     {
+        HorarioEntidad horario = new HorarioEntidad
+        {
+            IdMateria = request.IdMateria,
+            IdDocente = request.IdDocente,
+            IdFranjaHoraria = request.IdFranjaHoraria,
+            Observacion = request.Observacion
+        };
+
+        HorarioEntidad? horarioActual =
+            await gestorHorario.ConsultarHorarioPorIdAsync(id);
+
+        if (horarioActual == null)
+        {
+            return NotFound("El horario no existe.");
+        }
+
+        horario.IdGrupo = horarioActual.IdGrupo;
+        horario.Activo = horarioActual.Activo;
+
+        List<string> errores =
+            await gestorHorario.ModificarAsignaturaHorarioAsync(id, horario);
+
+        if (errores.Count > 0)
+        {
+            return BadRequest(errores);
+        }
+
+        HorarioEntidad? horarioActualizado =
+            await gestorHorario.ConsultarHorarioPorIdAsync(id);
+
+        return Ok(new
+        {
+            Mensaje = "Asignatura del horario actualizada correctamente.",
+            Horario = horarioActualizado == null
+                ? null
+                : MapearHorarioResponse(horarioActualizado)
+        });
+    }
+
+    // Inactiva un horario sin eliminarlo físicamente.
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> EliminarHorario(int id)
+    {
+        List<string> errores =
+            await gestorHorario.DesactivarHorarioAsync(id);
+
+        if (errores.Count > 0)
+        {
+            return BadRequest(errores);
+        }
+
         return Ok(new
         {
             IdHorario = id,
-            request.IdMateria,
-            request.IdDocente,
-            request.FechaInicio,
-            request.HoraInicio,
-            request.HoraFinal,
-            request.Intensidad,
-            request.Observacion,
-            Mensaje = "Asignatura actualizada correctamente."
+            Mensaje = "Horario inactivado correctamente."
         });
     }
 
-    [HttpGet("{id}/vista-previa")]
-    public IActionResult ObtenerVistaPreviaHorario(int id)
+    // Lista los horarios asociados a un grupo.
+    [HttpGet("grupo/{idGrupo}")]
+    public async Task<ActionResult<List<HorarioResponse>>> ObtenerHorariosPorGrupo(
+        int idGrupo)
     {
-        return Ok(new
-        {
-            IdHorario = id,
-            Estado = "PendienteAprobacion",
-            Bloques = new[]
-            {
-                new
-                {
-                    Dia = "Lunes",
-                    HoraInicio = "07:00",
-                    HoraFinal = "08:00",
-                    Asignatura = "Cálculo Diferencial",
-                    Docente = "Carlos Pérez",
-                    Grupo = "Grupo 1A",
-                    Color = "Verde"
-                },
-                new
-                {
-                    Dia = "Martes",
-                    HoraInicio = "09:00",
-                    HoraFinal = "10:00",
-                    Asignatura = "Programación I",
-                    Docente = "Ana Gómez",
-                    Grupo = "Grupo 1B",
-                    Color = "Azul"
-                }
-            }
-        });
+        List<HorarioEntidad> horarios =
+            await gestorHorario.ListarHorariosPorGrupoAsync(idGrupo);
+
+        List<HorarioResponse> respuesta = horarios
+            .Select(MapearHorarioResponse)
+            .ToList();
+
+        return Ok(respuesta);
     }
 
-    [HttpPost("{id}/aprobar")]
-    public IActionResult AprobarHorario(int id)
+    // Lista los horarios asociados a un docente.
+    [HttpGet("docente/{idDocente}")]
+    public async Task<ActionResult<List<HorarioDocenteResponse>>> ObtenerHorariosPorDocente(
+        int idDocente)
     {
-        return Ok(new
-        {
-            IdHorario = id,
-            Estado = "Aprobado",
-            Mensaje = "Horario aprobado correctamente."
-        });
+        List<HorarioEntidad> horarios =
+            await gestorHorario.ListarHorariosPorDocenteAsync(idDocente);
+
+        List<HorarioDocenteResponse> respuesta = horarios
+            .Select(MapearHorarioDocenteResponse)
+            .ToList();
+
+        return Ok(respuesta);
     }
 
-    [HttpPost("{id}/rechazar")]
-    public IActionResult RechazarHorario(int id, [FromBody] RechazarHorarioRequest request)
+    // Lista los horarios asociados a una materia.
+    [HttpGet("materia/{idMateria}")]
+    public async Task<ActionResult<List<HorarioResponse>>> ObtenerHorariosPorMateria(
+        int idMateria)
     {
-        return Ok(new
-        {
-            IdHorario = id,
-            Estado = "Rechazado",
-            request.Motivo,
-            Mensaje = "Horario rechazado correctamente."
-        });
+        List<HorarioEntidad> horarios =
+            await gestorHorario.ListarHorariosPorMateriaAsync(idMateria);
+
+        List<HorarioResponse> respuesta = horarios
+            .Select(MapearHorarioResponse)
+            .ToList();
+
+        return Ok(respuesta);
     }
 
-    [HttpGet("conflictos")]
-    public IActionResult ObtenerConflictos()
+    // Busca horarios por nombre, identificación o correo del docente.
+    [HttpGet("docentes/buscar")]
+    public async Task<ActionResult<List<HorarioDocenteResponse>>> BuscarHorariosPorDocente(
+        [FromQuery] string busqueda)
     {
-        return Ok(new[]
-        {
-            new
-            {
-                IdConflicto = 1,
-                Tipo = "Docente",
-                Descripcion = "El docente tiene dos grupos asignados en el mismo horario.",
-                Dia = "Lunes",
-                HoraInicio = "08:00",
-                HoraFinal = "10:00"
-            }
-        });
+        List<HorarioEntidad> horarios =
+            await gestorHorario.BuscarHorariosPorDocenteAsync(busqueda);
+
+        List<HorarioDocenteResponse> respuesta = horarios
+            .Select(MapearHorarioDocenteResponse)
+            .ToList();
+
+        return Ok(respuesta);
     }
 
-    [HttpGet("visualizacion")]
-    public IActionResult VisualizarHorarios([FromQuery] string? busqueda, [FromQuery] string? programa)
+    // Convierte una entidad Horario en respuesta completa.
+    private HorarioResponse MapearHorarioResponse(HorarioEntidad horario)
     {
-        return Ok(new
+        TimeSpan horaInicio = horario.FranjaHoraria?.HoraInicio ?? TimeSpan.Zero;
+        TimeSpan horaFin = horario.FranjaHoraria?.HoraFin ?? TimeSpan.Zero;
+
+        return new HorarioResponse
         {
-            Coordinador = "Administrador",
-            Codigo = "1234",
-            Programa = programa ?? "Ingeniería de Sistemas",
-            Horarios = new[]
-            {
-                new
-                {
-                    Asignatura = "Inglés LAN",
-                    Dia = "Martes",
-                    Horario = "10:00 - 12:00",
-                    Docente = "Lina Gómez",
-                    Estado = "Activa"
-                }
-            }
-        });
+            IdHorario = horario.IdHorario,
+
+            IdGrupo = horario.IdGrupo,
+            CodigoGrupo = horario.Grupo?.Codigo ?? string.Empty,
+            NombreGrupo = horario.Grupo?.Nombre ?? string.Empty,
+
+            IdMateria = horario.IdMateria,
+            CodigoMateria = horario.Materia?.Codigo ?? string.Empty,
+            NombreMateria = horario.Materia?.Nombre ?? string.Empty,
+
+            IdDocente = horario.IdDocente,
+            NombreDocente = horario.Docente?.NombreCompleto ?? string.Empty,
+            IdentificacionDocente = horario.Docente?.Identificacion ?? string.Empty,
+
+            IdFranjaHoraria = horario.IdFranjaHoraria,
+            DiaSemana = horario.FranjaHoraria?.DiaSemana ?? string.Empty,
+            HoraInicio = horaInicio,
+            HoraFin = horaFin,
+            HorarioTexto = ObtenerHorarioTexto(horaInicio, horaFin),
+
+            Observacion = horario.Observacion,
+            Activo = horario.Activo,
+            EstadoTexto = ObtenerEstadoTexto(horario.Activo)
+        };
     }
 
-    [HttpGet("docentes")]
-    public IActionResult ObtenerHorariosDocentes()
+    // Convierte una entidad Horario en respuesta para horario docente.
+    private HorarioDocenteResponse MapearHorarioDocenteResponse(
+        HorarioEntidad horario)
     {
-        return Ok(new[]
+        TimeSpan horaInicio = horario.FranjaHoraria?.HoraInicio ?? TimeSpan.Zero;
+        TimeSpan horaFin = horario.FranjaHoraria?.HoraFin ?? TimeSpan.Zero;
+
+        return new HorarioDocenteResponse
         {
-            new
-            {
-                IdDocente = 1,
-                NombreDocente = "Carlos Pérez",
-                TotalHorasSemanales = 16,
-                Horarios = new[]
-                {
-                    new
-                    {
-                        Dia = "Lunes",
-                        HoraInicio = "08:00",
-                        HoraFinal = "10:00",
-                        Materia = "Programación I",
-                        Grupo = "Grupo 1A",
-                        Aula = "Aula 203"
-                    }
-                }
-            }
-        });
+            IdHorario = horario.IdHorario,
+
+            IdDocente = horario.IdDocente,
+            NombreDocente = horario.Docente?.NombreCompleto ?? string.Empty,
+            IdentificacionDocente = horario.Docente?.Identificacion ?? string.Empty,
+            CorreoInstitucional = horario.Docente?.CorreoInstitucional ?? string.Empty,
+
+            IdGrupo = horario.IdGrupo,
+            CodigoGrupo = horario.Grupo?.Codigo ?? string.Empty,
+            NombreGrupo = horario.Grupo?.Nombre ?? string.Empty,
+
+            IdMateria = horario.IdMateria,
+            CodigoMateria = horario.Materia?.Codigo ?? string.Empty,
+            NombreMateria = horario.Materia?.Nombre ?? string.Empty,
+
+            DiaSemana = horario.FranjaHoraria?.DiaSemana ?? string.Empty,
+            HoraInicio = horaInicio,
+            HoraFin = horaFin,
+            HorarioTexto = ObtenerHorarioTexto(horaInicio, horaFin),
+
+            EstadoTexto = ObtenerEstadoTexto(horario.Activo)
+        };
     }
 
-    [HttpGet("docentes/{idDocente}")]
-    public IActionResult ObtenerHorarioDocentePorId(int idDocente)
+    // Retorna el horario en formato legible.
+    private string ObtenerHorarioTexto(TimeSpan horaInicio, TimeSpan horaFin)
     {
-        return Ok(new
-        {
-            IdDocente = idDocente,
-            NombreDocente = "Carlos Pérez",
-            TotalHorasSemanales = 16,
-            Horarios = new[]
-            {
-                new
-                {
-                    Dia = "Lunes",
-                    HoraInicio = "08:00",
-                    HoraFinal = "10:00",
-                    Materia = "Programación I",
-                    Grupo = "Grupo 1A",
-                    Jornada = "Diurna",
-                    Aula = "Aula 203"
-                },
-                new
-                {
-                    Dia = "Miércoles",
-                    HoraInicio = "10:00",
-                    HoraFinal = "12:00",
-                    Materia = "Bases de Datos",
-                    Grupo = "Grupo 2B",
-                    Jornada = "Diurna",
-                    Aula = "Aula 105"
-                }
-            }
-        });
+        return $"{horaInicio:hh\\:mm} - {horaFin:hh\\:mm}";
     }
 
-    [HttpGet("docentes/{idDocente}/disponibilidad")]
-    public IActionResult ObtenerDisponibilidadDocente(int idDocente)
+    // Convierte el estado booleano en texto legible.
+    private string ObtenerEstadoTexto(bool activo)
     {
-        return Ok(new
+        if (activo)
         {
-            IdDocente = idDocente,
-            NombreDocente = "Carlos Pérez",
-            Disponibilidad = new[]
-            {
-                new
-                {
-                    Dia = "Lunes",
-                    HoraInicio = "08:00",
-                    HoraFinal = "12:00"
-                },
-                new
-                {
-                    Dia = "Miércoles",
-                    HoraInicio = "14:00",
-                    HoraFinal = "18:00"
-                }
-            }
-        });
+            return "Activo";
+        }
+
+        return "Inactivo";
     }
-
-    [HttpGet("docentes/{idDocente}/conflictos")]
-    public IActionResult ObtenerConflictosDocente(int idDocente)
-    {
-        return Ok(new
-        {
-            IdDocente = idDocente,
-            NombreDocente = "Carlos Pérez",
-            Conflictos = new[]
-            {
-                new
-                {
-                    Dia = "Lunes",
-                    HoraInicio = "08:00",
-                    HoraFinal = "10:00",
-                    Descripcion = "El docente tiene dos grupos asignados en el mismo horario."
-                }
-            }
-        });
-    }
-
-    [HttpGet("docentes/{idDocente}/carga")]
-    public IActionResult ObtenerCargaDocente(int idDocente)
-    {
-        return Ok(new
-        {
-            IdDocente = idDocente,
-            NombreDocente = "Carlos Pérez",
-            TotalHorasSemanales = 16,
-            MateriasAsignadas = 3,
-            GruposAsignados = 4
-        });
-    }
-}
-
-public class GenerarHorarioRequest
-{
-    public string HoraInicio { get; set; } = string.Empty;
-    public string HoraFinal { get; set; } = string.Empty;
-    public int DuracionBloque { get; set; }
-    public List<string> Dias { get; set; } = new();
-}
-
-public class ActualizarHorarioRequest
-{
-    public int IdGrupo { get; set; }
-    public int IdMateria { get; set; }
-    public int IdDocente { get; set; }
-    public string Dia { get; set; } = string.Empty;
-    public string HoraInicio { get; set; } = string.Empty;
-    public string HoraFinal { get; set; } = string.Empty;
-    public string Jornada { get; set; } = string.Empty;
-    public string Estado { get; set; } = string.Empty;
-}
-
-public class ActualizarAsignaturaHorarioRequest
-{
-    public int IdMateria { get; set; }
-    public int IdDocente { get; set; }
-    public string FechaInicio { get; set; } = string.Empty;
-    public string HoraInicio { get; set; } = string.Empty;
-    public string HoraFinal { get; set; } = string.Empty;
-    public int Intensidad { get; set; }
-    public string Observacion { get; set; } = string.Empty;
-}
-
-public class RechazarHorarioRequest
-{
-    public string Motivo { get; set; } = string.Empty;
 }
