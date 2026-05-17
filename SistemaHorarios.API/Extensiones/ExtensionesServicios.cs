@@ -6,6 +6,7 @@ using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Logica.Negocio.FranjasHorarias.Interfaces;
 using SistemaHorarios.Logica.Negocio.FranjasHorarias.Servicios;
+using SistemaHorarios.Logica.Negocio.Grupos;
 using SistemaHorarios.Logica.Negocio.Materias;
 using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
 using SistemaHorarios.Logica.Negocio.Roles.Servicios;
@@ -15,6 +16,8 @@ using SistemaHorarios.Logica.Negocio.PlanAcademico.Interfaces;
 using SistemaHorarios.Logica.Negocio.PlanAcademico.Servicios;
 using SistemaHorarios.Logica.Negocio.Reportes.Interfaces;
 using SistemaHorarios.Logica.Negocio.Reportes.Servicios;
+using SistemaHorarios.Logica.Negocio.Dashboard.Interfaces;
+using SistemaHorarios.Logica.Negocio.Dashboard.Servicios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -64,12 +67,22 @@ public static class ExtensionesServicios
         services.AddScoped<IFranjaHorariaService, FranjaHorariaService>();
         services.AddScoped<FranjaHorariaRepository>();
 
+        //Grupos
+        services.AddScoped<GrupoRepository>();
+
+        // Gestores de grupos
+        services.AddScoped<GestorGrupo>();
+
         // Plan académico
         services.AddScoped<IPlanAcademicoService, PlanAcademicoService>();
         services.AddScoped<IPlanAcademicoRepository, PlanAcademicoRepository>();
 
         // Reportes
         services.AddScoped<IReporteService, ReporteService>();
+
+        // Dashboard
+        services.AddScoped<IDashboardService, DashboardService>();
+
 
         return services;
     }

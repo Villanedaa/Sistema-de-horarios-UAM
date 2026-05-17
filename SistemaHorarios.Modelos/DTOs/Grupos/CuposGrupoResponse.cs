@@ -1,6 +1,9 @@
-﻿namespace SistemaHorarios.API.DTOs.Grupos
+﻿namespace SistemaHorarios.Modelos.DTOs.Grupos;
+
+// Representa la cantidad de estudiantes asociada a un grupo.
+public class GrupoCuposResponse
 {
-    public class CuposGrupoResponse
-    {
-    }
+    public int IdGrupo { get; set; }
+
+    public int CantidadEstudiantes { get; set; }
 }

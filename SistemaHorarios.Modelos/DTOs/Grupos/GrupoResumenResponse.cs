@@ -1,8 +1,10 @@
 ﻿namespace SistemaHorarios.Modelos.DTOs.Grupos;
 
-// Representa los datos necesarios para actualizar un grupo académico.
-public class ActualizarGrupoRequest
+// Representa un grupo académico en formato resumido para listados.
+public class GrupoResumenResponse
 {
+    public int IdGrupo { get; set; }
+
     public string Codigo { get; set; } = string.Empty;
 
     public string Nombre { get; set; } = string.Empty;
@@ -15,7 +17,7 @@ public class ActualizarGrupoRequest
 
     public int CantidadEstudiantes { get; set; }
 
-    public int IdPlanAcademico { get; set; }
-
     public bool Activo { get; set; }
+
+    public string EstadoTexto { get; set; } = string.Empty;
 }
