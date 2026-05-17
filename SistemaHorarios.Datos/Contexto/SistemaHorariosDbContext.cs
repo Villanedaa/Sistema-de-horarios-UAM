@@ -22,27 +22,20 @@ public class SistemaHorariosDbContext : DbContext
     public DbSet<FranjaHoraria> FranjasHorarias { get; set; }
 
 
-<<<<<<< HEAD
     public DbSet<Docente> Docentes { get; set; }
 
 
 
-=======
     public DbSet<Grupo> Grupos { get; set; }
 
-    public DbSet<Docente> Docentes { get; set; }
 
 
->>>>>>> 7b64a2aceb2d74ef9710e6373ff9f5f6cb84f50c
     public DbSet<PlanAcademico> PlanesAcademicos { get; set; }
 
     public DbSet<SemestrePlan> SemestresPlan { get; set; }
 
     public DbSet<MateriaPlan> MateriasPlan { get; set; }
-<<<<<<< HEAD
 
-=======
->>>>>>> 7b64a2aceb2d74ef9710e6373ff9f5f6cb84f50c
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
