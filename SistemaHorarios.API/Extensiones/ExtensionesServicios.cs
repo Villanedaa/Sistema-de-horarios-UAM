@@ -4,18 +4,21 @@ using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Datos.Interfaces;
 using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Logica.Negocio.Auth;
+using SistemaHorarios.Logica.Negocio.Dashboard.Interfaces;
+using SistemaHorarios.Logica.Negocio.Dashboard.Servicios;
+using SistemaHorarios.Logica.Negocio.Docentes;
 using SistemaHorarios.Logica.Negocio.FranjasHorarias.Interfaces;
 using SistemaHorarios.Logica.Negocio.FranjasHorarias.Servicios;
 using SistemaHorarios.Logica.Negocio.Grupos;
 using SistemaHorarios.Logica.Negocio.Materias;
-using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
-using SistemaHorarios.Logica.Negocio.Roles.Servicios;
-using SistemaHorarios.Logica.Negocio.Usuario.Interface;
-using SistemaHorarios.Logica.Negocio.Usuario.Servicios;
 using SistemaHorarios.Logica.Negocio.PlanAcademico.Interfaces;
 using SistemaHorarios.Logica.Negocio.PlanAcademico.Servicios;
 using SistemaHorarios.Logica.Negocio.Reportes.Interfaces;
 using SistemaHorarios.Logica.Negocio.Reportes.Servicios;
+using SistemaHorarios.Logica.Negocio.Roles.Interfaces;
+using SistemaHorarios.Logica.Negocio.Roles.Servicios;
+using SistemaHorarios.Logica.Negocio.Usuario.Interface;
+using SistemaHorarios.Logica.Negocio.Usuario.Servicios;
 
 namespace SistemaHorarios.API.Extensions;
 
@@ -78,6 +81,14 @@ public static class ExtensionesServicios
         // Reportes
         services.AddScoped<IReporteService, ReporteService>();
 
+        // Dashboard
+        services.AddScoped<IDashboardService, DashboardService>();
+
+        // Docentes
+
+        services.AddScoped<IDocenteRepository, DocenteRepository>();
+
+        services.AddScoped<IGestorDocente, GestorDocente>();
 
         return services;
     }
