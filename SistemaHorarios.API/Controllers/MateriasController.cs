@@ -71,7 +71,8 @@ namespace SistemaHorarios.API.Controllers
                 Nombre = request.Nombre,
                 Creditos = request.Creditos,
                 IntensidadHorariaSemanal = request.IntensidadHorariaSemanal,
-                Semestre = request.Semestre
+                Semestre = request.Semestre,
+                CantidadGrupos = request.CantidadGrupos
             };
 
             List<string> errores = await gestorMateria.CrearMateriaAsync(materia);
@@ -101,6 +102,7 @@ namespace SistemaHorarios.API.Controllers
                 Creditos = request.Creditos,
                 IntensidadHorariaSemanal = request.IntensidadHorariaSemanal,
                 Semestre = request.Semestre,
+                CantidadGrupos = request.CantidadGrupos,
                 Activa = request.Activa
             };
 
@@ -181,6 +183,7 @@ namespace SistemaHorarios.API.Controllers
                 Creditos = materia.Creditos,
                 IntensidadHorariaSemanal = materia.IntensidadHorariaSemanal,
                 Semestre = materia.Semestre,
+                CantidadGrupos = materia.CantidadGrupos,
                 Activa = materia.Activa,
                 EstadoTexto = ObtenerEstadoTexto(materia.Activa)
             };
@@ -197,6 +200,7 @@ namespace SistemaHorarios.API.Controllers
                 Creditos = materia.Creditos,
                 IntensidadHorariaSemanal = materia.IntensidadHorariaSemanal,
                 Semestre = materia.Semestre,
+                CantidadGrupos = materia.CantidadGrupos,
                 Activa = materia.Activa,
                 EstadoTexto = ObtenerEstadoTexto(materia.Activa)
             };

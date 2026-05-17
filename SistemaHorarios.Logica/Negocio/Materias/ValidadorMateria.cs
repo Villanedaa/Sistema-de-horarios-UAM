@@ -21,6 +21,7 @@ namespace SistemaHorarios.Logica.Negocio.Materias
             ValidarCreditos(materia.Creditos, errores);
             ValidarIntensidadHoraria(materia.IntensidadHorariaSemanal, errores);
             ValidarSemestre(materia.Semestre, errores);
+            ValidarCantidadGrupos(materia.CantidadGrupos,errores);
 
             return errores;
         }
@@ -72,6 +73,15 @@ namespace SistemaHorarios.Logica.Negocio.Materias
                 semestre <= 0,
                 errores,
                 "El semestre de la materia debe ser mayor a cero."
+            );
+        }
+
+        private void ValidarCantidadGrupos(int cantidadGrupos, List<string> errores)
+        {
+            AgregarErrorSi(
+                cantidadGrupos < 0,
+                errores,
+                "La cantidad de grupos no puede ser negativa."
             );
         }
 

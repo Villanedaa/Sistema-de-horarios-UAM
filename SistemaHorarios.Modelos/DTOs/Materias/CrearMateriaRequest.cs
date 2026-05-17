@@ -12,5 +12,7 @@
         public int IntensidadHorariaSemanal { get; set; }
 
         public int Semestre { get; set; }
+
+        public int CantidadGrupos { get; set; }
     }
 }

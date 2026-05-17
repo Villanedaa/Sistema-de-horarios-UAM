@@ -86,6 +86,7 @@ namespace SistemaHorarios.Datos.Repositorios
             materiaActual.Creditos = materiaModificada.Creditos;
             materiaActual.IntensidadHorariaSemanal = materiaModificada.IntensidadHorariaSemanal;
             materiaActual.Semestre = materiaModificada.Semestre;
+            materiaActual.CantidadGrupos = materiaModificada.CantidadGrupos;
             materiaActual.Activa = materiaModificada.Activa;
 
             await contexto.SaveChangesAsync();
