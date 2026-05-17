@@ -21,7 +21,9 @@ public class SistemaHorariosDbContext : DbContext
 
     public DbSet<FranjaHoraria> FranjasHorarias { get; set; }
 
-
+    public DbSet<DisponibilidadDocente>
+      DisponibilidadesDocentes
+    { get; set; }
     public DbSet<Docente> Docentes { get; set; }
 
 
