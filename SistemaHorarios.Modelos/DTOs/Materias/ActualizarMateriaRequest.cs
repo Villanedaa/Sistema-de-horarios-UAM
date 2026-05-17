@@ -13,6 +13,8 @@
 
         public int Semestre { get; set; }
 
+        public int CantidadGrupos { get; set; }
+
         public bool Activa { get; set; }
     }
 }
