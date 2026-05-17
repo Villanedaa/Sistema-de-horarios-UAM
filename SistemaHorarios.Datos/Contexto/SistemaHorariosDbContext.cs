@@ -24,6 +24,8 @@ public class SistemaHorariosDbContext : DbContext
 
     public DbSet<Docente> Docentes { get; set; }
 
+
+
     public DbSet<PlanAcademico> PlanesAcademicos { get; set; }
 
     public DbSet<SemestrePlan> SemestresPlan { get; set; }
