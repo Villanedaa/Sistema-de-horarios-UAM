@@ -1,17 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace SistemaHorarios.Modelos.Entidades
+namespace SistemaHorarios.Modelos.Entidades;
+
+/// <summary>
+/// Representa un rol dentro del sistema.
+///
+/// Los roles controlan:
+/// - permisos,
+/// - autorización,
+/// - acceso a módulos,
+/// - policies del sistema.
+/// </summary>
+public class Rol
 {
-    public class Rol
-    {
-        [Key]
-        public int IdRol { get; set; }
+    /// <summary>
+    /// Identificador único del rol.
+    /// </summary>
+    [Key]
+    public int IdRol { get; set; }
 
-        public string Nombre { get; set; } = string.Empty;
+    /// <summary>
+    /// Nombre del rol.
+    /// </summary>
+    public string Nombre { get; set; } = string.Empty;
 
-        public bool Activo { get; set; } = true;
-    }
+    /// <summary>
+    /// Descripción funcional del rol.
+    /// </summary>
+    public string Descripcion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Indica si el rol está activo.
+    /// </summary>
+    public bool Activo { get; set; } = true;
 }

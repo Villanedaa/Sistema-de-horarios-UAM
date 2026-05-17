@@ -1,10 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace SistemaHorarios.Modelos.Entidades;
 
-namespace SistemaHorarios.Modelos.Entidades
+public class SemestrePlan
 {
-    internal class SemestrePlan
-    {
-    }
+    public int IdSemestrePlan { get; set; }
+
+    public int NumeroSemestre { get; set; }
+
+    public int IdPlanAcademico { get; set; }
+
+    public PlanAcademico? PlanAcademico { get; set; }
+
+    public ICollection<MateriaPlan> MateriasPlan { get; set; } =
+        new List<MateriaPlan>();
 }

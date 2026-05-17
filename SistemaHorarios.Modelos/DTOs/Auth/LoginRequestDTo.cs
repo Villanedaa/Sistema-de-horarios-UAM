@@ -1,12 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace SistemaHorarios.Modelos.DTOs.Auth
+namespace SistemaHorarios.Modelos.DTOs.Auth;
+
+
+/// <summary>
+/// DTO utilizado para solicitudes
+/// de inicio de sesión.
+/// </summary>
+public class LoginRequestDto
 {
-    internal class LoginRequest
+    [Required(
+        ErrorMessage =
+            "El correo es obligatorio")]
+    [EmailAddress(
+        ErrorMessage =
+            "Correo inválido")]
+    public string CorreoInstitucional
     {
-    }
+        get; set;
+    } = string.Empty;
+
+    [Required(
+        ErrorMessage =
+            "La contraseña es obligatoria")]
+    [MinLength(
+        6,
+        ErrorMessage =
+            "La contraseña debe tener mínimo 6 caracteres")]
+    public string Contrasena
+    {
+        get; set;
+    } = string.Empty;
 }

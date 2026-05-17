@@ -8,11 +8,17 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SistemaHorarios.Datos\SistemaHorarios.Datos.csproj" />
     <ProjectReference Include="..\SistemaHorarios.Modelos\SistemaHorarios.Modelos.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Helpers\" />
+    <Folder Include="Validadores\" />
   </ItemGroup>
 
 </Project>

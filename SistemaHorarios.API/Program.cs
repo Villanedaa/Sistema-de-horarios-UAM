@@ -1,53 +1,30 @@
-using Microsoft.EntityFrameworkCore;
-using SistemaHorarios.Datos.Contexto;
-using SistemaHorarios.Datos.Repositorios;
-using SistemaHorarios.Logica.Negocio.Materias;
+using SistemaHorarios.API.Configuraciones;
+using SistemaHorarios.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<
-    SistemaHorariosDbContext
->(
-    options =>
-        options.UseMySql(
-            builder.Configuration.GetConnectionString(
-                "DefaultConnection"
-            ),
-            ServerVersion.AutoDetect(
-                builder.Configuration.GetConnectionString(
-                    "DefaultConnection"
-                )
-            )
-        )
-);
-
+// Controladores
 builder.Services.AddControllers();
 
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.ConfigurarSwagger();
 
-builder.Services.AddSwaggerGen();
+// JWT
+builder.Services.ConfigurarJWT(builder.Configuration);
 
-//Registrar los repositorios del modulo de materias.
-builder.Services.AddScoped<MateriaRepository>();
-builder.Services.AddScoped<PrerrequisitoRepository>();
+// Base de datos
+builder.Services.ConfigurarBaseDatos(builder.Configuration);
 
-//Registrar los gestores del modulo de materias.
-builder.Services.AddScoped<GestorMateria>();
-builder.Services.AddScoped<GestorPrerrequisito>();
+// Servicios y repositorios
+builder.Services.RegistrarServicios();
+
+// Políticas de autorización
+builder.Services.ConfigurarPoliticas();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-
-    app.UseSwaggerUI();
-}
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.MapControllers();
+// Pipeline HTTP
+app.ConfigurarPipeline();
 
 app.Run();

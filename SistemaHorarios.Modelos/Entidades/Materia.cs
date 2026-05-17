@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SistemaHorarios.Modelos.Entidades;
 
@@ -19,4 +20,5 @@ public class Materia
     public int Semestre { get; set; }
 
     public bool Activa { get; set; } = true;
+
 }
