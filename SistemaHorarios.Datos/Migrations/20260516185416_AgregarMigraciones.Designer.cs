@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaHorarios.Datos.Contexto;
 
@@ -11,9 +12,11 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    partial class SistemaHorariosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260516185416_AgregarMigraciones")]
+    partial class AgregarMigraciones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,35 +24,6 @@ namespace SistemaHorarios.Datos.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.DisponibilidadDocente", b =>
-                {
-                    b.Property<int>("IdDisponibilidadDocente")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdDisponibilidadDocente"));
-
-                    b.Property<string>("Dia")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("Disponible")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<TimeSpan>("HoraFin")
-                        .HasColumnType("time(6)");
-
-                    b.Property<TimeSpan>("HoraInicio")
-                        .HasColumnType("time(6)");
-
-                    b.Property<int>("IdDocente")
-                        .HasColumnType("int");
-
-                    b.HasKey("IdDisponibilidadDocente");
-
-                    b.ToTable("DisponibilidadesDocentes");
-                });
 
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Docente", b =>
                 {
