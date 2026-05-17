@@ -12,7 +12,7 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    [Migration("20260516185416_AgregarMigraciones")]
+    [Migration("20260517173410_AgregarMigraciones")]
     partial class AgregarMigraciones
     {
         /// <inheritdoc />
@@ -24,6 +24,35 @@ namespace SistemaHorarios.Datos.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.DisponibilidadDocente", b =>
+                {
+                    b.Property<int>("IdDisponibilidadDocente")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdDisponibilidadDocente"));
+
+                    b.Property<string>("Dia")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("Disponible")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<TimeSpan>("HoraFin")
+                        .HasColumnType("time(6)");
+
+                    b.Property<TimeSpan>("HoraInicio")
+                        .HasColumnType("time(6)");
+
+                    b.Property<int>("IdDocente")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdDisponibilidadDocente");
+
+                    b.ToTable("DisponibilidadesDocentes");
+                });
 
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Docente", b =>
                 {
@@ -51,6 +80,32 @@ namespace SistemaHorarios.Datos.Migrations
                     b.HasKey("IdDocente");
 
                     b.ToTable("Docentes");
+                });
+
+            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.DocenteMateria", b =>
+                {
+                    b.Property<int>("IdDocenteMateria")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdDocenteMateria"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("IdDocente")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdMateria")
+                        .HasColumnType("int");
+
+                    b.HasKey("IdDocenteMateria");
+
+                    b.HasIndex("IdDocente");
+
+                    b.HasIndex("IdMateria");
+
+                    b.ToTable("DocenteMaterias");
                 });
 
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.FranjaHoraria", b =>
@@ -122,6 +177,46 @@ namespace SistemaHorarios.Datos.Migrations
                     b.ToTable("Grupos");
                 });
 
+            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Horario", b =>
+                {
+                    b.Property<int>("IdHorario")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("IdHorario"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("IdDocente")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdFranjaHoraria")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdGrupo")
+                        .HasColumnType("int");
+
+                    b.Property<int>("IdMateria")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observacion")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("IdHorario");
+
+                    b.HasIndex("IdDocente");
+
+                    b.HasIndex("IdFranjaHoraria");
+
+                    b.HasIndex("IdGrupo");
+
+                    b.HasIndex("IdMateria");
+
+                    b.ToTable("Horarios");
+                });
+
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Materia", b =>
                 {
                     b.Property<int>("IdMateria")
@@ -132,6 +227,9 @@ namespace SistemaHorarios.Datos.Migrations
 
                     b.Property<bool>("Activa")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("CantidadGrupos")
+                        .HasColumnType("int");
 
                     b.Property<string>("Codigo")
                         .IsRequired()
@@ -336,6 +434,25 @@ namespace SistemaHorarios.Datos.Migrations
                     b.ToTable("Usuarios");
                 });
 
+            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.DocenteMateria", b =>
+                {
+                    b.HasOne("SistemaHorarios.Modelos.Entidades.Docente", "Docente")
+                        .WithMany()
+                        .HasForeignKey("IdDocente")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SistemaHorarios.Modelos.Entidades.Materia", "Materia")
+                        .WithMany()
+                        .HasForeignKey("IdMateria")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Docente");
+
+                    b.Navigation("Materia");
+                });
+
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Grupo", b =>
                 {
                     b.HasOne("SistemaHorarios.Modelos.Entidades.PlanAcademico", "PlanAcademico")
@@ -345,6 +462,41 @@ namespace SistemaHorarios.Datos.Migrations
                         .IsRequired();
 
                     b.Navigation("PlanAcademico");
+                });
+
+            modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.Horario", b =>
+                {
+                    b.HasOne("SistemaHorarios.Modelos.Entidades.Docente", "Docente")
+                        .WithMany()
+                        .HasForeignKey("IdDocente")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SistemaHorarios.Modelos.Entidades.FranjaHoraria", "FranjaHoraria")
+                        .WithMany()
+                        .HasForeignKey("IdFranjaHoraria")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SistemaHorarios.Modelos.Entidades.Grupo", "Grupo")
+                        .WithMany()
+                        .HasForeignKey("IdGrupo")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SistemaHorarios.Modelos.Entidades.Materia", "Materia")
+                        .WithMany()
+                        .HasForeignKey("IdMateria")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Docente");
+
+                    b.Navigation("FranjaHoraria");
+
+                    b.Navigation("Grupo");
+
+                    b.Navigation("Materia");
                 });
 
             modelBuilder.Entity("SistemaHorarios.Modelos.Entidades.MateriaPlan", b =>

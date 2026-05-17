@@ -20,6 +20,8 @@ public static class ExtensionesAplicacion
 
         app.UseMiddleware<ExceptionMiddleware>();
 
+        app.UseCors("PermitirFrontend");
+
         app.UseAuthentication();
 
         app.UseAuthorization();
