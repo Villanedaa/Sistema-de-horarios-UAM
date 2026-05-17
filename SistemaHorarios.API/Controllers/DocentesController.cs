@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+
 using SistemaHorarios.Logica.Negocio.Docentes;
+
 using SistemaHorarios.Modelos.DTOs.Docentes;
 
 namespace SistemaHorarios.API.Controllers;
@@ -10,10 +12,22 @@ public class DocentesController : ControllerBase
 {
     private readonly IGestorDocente _gestor;
 
-    public DocentesController(IGestorDocente gestor)
+    private readonly IGestorDisponibilidadDocente
+        _gestorDisponibilidad;
+
+    public DocentesController(
+        IGestorDocente gestor,
+
+        IGestorDisponibilidadDocente gestorDisponibilidad)
     {
         _gestor = gestor;
+
+        _gestorDisponibilidad = gestorDisponibilidad;
     }
+
+    // =====================================================
+    // CRUD DOCENTES
+    // =====================================================
 
     [HttpGet]
     public async Task<IActionResult> ObtenerTodos()
@@ -35,9 +49,10 @@ public class DocentesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Crear(DocenteRequest dto)
+    public async Task<IActionResult> Crear(
+        DocenteRequest request)
     {
-        var docente = await _gestor.CrearAsync(dto);
+        var docente = await _gestor.CrearAsync(request);
 
         return CreatedAtAction(
             nameof(ObtenerPorId),
@@ -47,9 +62,12 @@ public class DocentesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Actualizar(int id, DocenteRequest dto)
+    public async Task<IActionResult> Actualizar(
+        int id,
+
+        DocenteRequest request)
     {
-        await _gestor.ActualizarAsync(id, dto);
+        await _gestor.ActualizarAsync(id, request);
 
         return NoContent();
     }
@@ -58,6 +76,34 @@ public class DocentesController : ControllerBase
     public async Task<IActionResult> Eliminar(int id)
     {
         await _gestor.EliminarAsync(id);
+
+        return NoContent();
+    }
+
+    // =====================================================
+    // DISPONIBILIDAD DOCENTE
+    // =====================================================
+
+    [HttpGet("{id}/disponibilidad")]
+    public async Task<IActionResult>
+        ObtenerDisponibilidad(int id)
+    {
+        var disponibilidad =
+            await _gestorDisponibilidad
+                .ObtenerDisponibilidadAsync(id);
+
+        return Ok(disponibilidad);
+    }
+
+    [HttpPut("{id}/disponibilidad")]
+    public async Task<IActionResult>
+        ActualizarDisponibilidad(
+            int id,
+
+            ActualizarDisponibilidadDocenteRequest request)
+    {
+        await _gestorDisponibilidad
+            .ActualizarDisponibilidadAsync(id, request);
 
         return NoContent();
     }
