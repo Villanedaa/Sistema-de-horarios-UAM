@@ -11,6 +11,10 @@ namespace SistemaHorarios.Modelos.DTOs.Auth;
 /// </summary>
 public class LoginResponseDto
 {
+    public int IdUsuario { get; set; }
+
+    public string CorreoInstitucional { get; set; } = string.Empty;
+
     public string Token { get; set; } = string.Empty;
 
     public string NombreCompleto { get; set; } = string.Empty;

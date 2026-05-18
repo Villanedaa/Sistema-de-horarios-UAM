@@ -146,6 +146,12 @@ public class AuthService : IAuthService
 
         return new LoginResponseDto
         {
+            IdUsuario =
+                usuario.IdUsuario,
+
+            CorreoInstitucional =
+                usuario.CorreoInstitucional,
+
             Token =
                 token,
 
