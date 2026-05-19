@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -6,6 +6,17 @@ namespace SistemaHorarios.API.Controllers;
 [Route("api/historial-cambios")]
 public class HistorialCambiosController : ControllerBase
 {
+    private record CambioItem(int IdCambio, string Fecha, string Hora, string Usuario, string Modulo, string Descripcion);
+
+    private static readonly CambioItem[] _datos =
+    {
+        new(1, "2026-04-27", "07:26", "admin.horarios", "Horarios",  "Actualizó límite de créditos nocturno para validación"),
+        new(2, "2026-04-27", "10:45", "coord.sistemas",  "Horarios",  "Generó propuesta PROP-2026-01-A"),
+        new(3, "2026-04-27", "15:40", "admin.horarios",  "Docentes",  "Registró disponibilidad de Marcela"),
+        new(4, "2026-04-28", "09:10", "admin.general",   "Usuarios",  "Creó cuenta para nuevo coordinador"),
+        new(5, "2026-04-28", "11:30", "coord.sistemas",  "Horarios",  "Aprobó propuesta PROP-2026-01-A")
+    };
+
     [HttpGet]
     public IActionResult ObtenerHistorialCambios(
         [FromQuery] string? usuario,
@@ -13,77 +24,36 @@ public class HistorialCambiosController : ControllerBase
         [FromQuery] string? fechaDesde,
         [FromQuery] string? fechaHasta)
     {
-        return Ok(new[]
-        {
-            new
-            {
-                IdCambio = 1,
-                Fecha = "2026-04-27",
-                Hora = "07:26",
-                Usuario = "admin.horarios",
-                Modulo = "Horarios",
-                Descripcion = "Actualizó límite de créditos nocturno para validación"
-            },
-            new
-            {
-                IdCambio = 2,
-                Fecha = "2026-04-27",
-                Hora = "10:45",
-                Usuario = "coord.sistemas",
-                Modulo = "Horarios",
-                Descripcion = "Generó propuesta PROP-2026-01-A"
-            },
-            new
-            {
-                IdCambio = 3,
-                Fecha = "2026-04-27",
-                Hora = "15:40",
-                Usuario = "admin.horarios",
-                Modulo = "Docentes",
-                Descripcion = "Registró disponibilidad de Marcela"
-            }
-        });
+        IEnumerable<CambioItem> query = _datos;
+
+        if (!string.IsNullOrWhiteSpace(usuario))
+            query = query.Where(x => x.Usuario.Equals(usuario, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(modulo))
+            query = query.Where(x => x.Modulo.Equals(modulo, StringComparison.OrdinalIgnoreCase));
+
+        if (DateTime.TryParse(fechaDesde, out var desde))
+            query = query.Where(x => DateTime.Parse($"{x.Fecha} {x.Hora}").Date >= desde.Date);
+
+        if (DateTime.TryParse(fechaHasta, out var hasta))
+            query = query.Where(x => DateTime.Parse($"{x.Fecha} {x.Hora}").Date <= hasta.Date);
+
+        return Ok(query.OrderByDescending(x => x.Fecha).ThenByDescending(x => x.Hora).ToArray());
     }
 
     [HttpGet("{id}")]
     public IActionResult ObtenerCambioPorId(int id)
     {
-        return Ok(new
-        {
-            IdCambio = id,
-            Fecha = "2026-04-27",
-            Hora = "07:26",
-            Usuario = "admin.horarios",
-            Modulo = "Horarios",
-            Descripcion = "Actualizó límite de créditos nocturno para validación",
-            DetalleAnterior = "Límite anterior: 16 créditos",
-            DetalleNuevo = "Nuevo límite: 18 créditos"
-        });
+        var item = _datos.FirstOrDefault(x => x.IdCambio == id);
+        if (item == null) return NotFound();
+        return Ok(item);
     }
 
     [HttpGet("modulos")]
     public IActionResult ObtenerModulos()
-    {
-        return Ok(new[]
-        {
-            "Plan académico",
-            "Docentes",
-            "Horarios",
-            "Materias",
-            "Reportes",
-            "Grupos académicos",
-            "Usuarios"
-        });
-    }
+        => Ok(_datos.Select(x => x.Modulo).Distinct().OrderBy(m => m).ToArray());
 
     [HttpGet("usuarios")]
     public IActionResult ObtenerUsuarios()
-    {
-        return Ok(new[]
-        {
-            "admin.horarios",
-            "coord.sistemas",
-            "admin.general"
-        });
-    }
+        => Ok(_datos.Select(x => x.Usuario).Distinct().OrderBy(u => u).ToArray());
 }

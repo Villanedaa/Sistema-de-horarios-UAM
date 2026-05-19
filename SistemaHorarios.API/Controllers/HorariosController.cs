@@ -183,6 +183,18 @@ public class HorariosController : ControllerBase
         });
     }
 
+    // Genera automáticamente los bloques de horario para un grupo.
+    [HttpPost("generar/{idGrupo}")]
+    public async Task<IActionResult> GenerarHorario(int idGrupo)
+    {
+        var (generados, errores) = await gestorHorario.GenerarHorariosAsync(idGrupo);
+
+        if (errores.Count > 0 && generados == 0)
+            return BadRequest(new { Errores = errores });
+
+        return Ok(new { Generados = generados, Advertencias = errores });
+    }
+
     // Lista los horarios asociados a un grupo.
     [HttpGet("grupo/{idGrupo}")]
     public async Task<ActionResult<List<HorarioResponse>>> ObtenerHorariosPorGrupo(
@@ -256,6 +268,8 @@ public class HorariosController : ControllerBase
             IdGrupo = horario.IdGrupo,
             CodigoGrupo = horario.Grupo?.Codigo ?? string.Empty,
             NombreGrupo = horario.Grupo?.Nombre ?? string.Empty,
+            Jornada = horario.Grupo?.Jornada ?? string.Empty,
+            TipoGrupo = horario.Grupo?.TipoGrupo ?? string.Empty,
 
             IdMateria = horario.IdMateria,
             CodigoMateria = horario.Materia?.Codigo ?? string.Empty,

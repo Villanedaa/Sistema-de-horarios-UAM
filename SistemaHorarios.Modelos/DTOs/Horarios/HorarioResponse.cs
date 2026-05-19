@@ -11,6 +11,10 @@ public class HorarioResponse
 
     public string NombreGrupo { get; set; } = string.Empty;
 
+    public string Jornada { get; set; } = string.Empty;
+
+    public string TipoGrupo { get; set; } = string.Empty;
+
     public int IdMateria { get; set; }
 
     public string CodigoMateria { get; set; } = string.Empty;

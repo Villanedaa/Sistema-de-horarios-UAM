@@ -86,10 +86,10 @@ public static class ExtensionesServicios
         services.AddScoped<IDashboardService, DashboardService>();
 
         // Docentes
-
         services.AddScoped<IDocenteRepository, DocenteRepository>();
-
+        services.AddScoped<IDisponibilidadDocenteRepository, DisponibilidadDocenteRepository>();
         services.AddScoped<IGestorDocente, GestorDocente>();
+        services.AddScoped<IGestorDisponibilidadDocente, GestorDisponibilidadDocente>();
 
         //Horarios
         services.AddScoped<GestorHorario>();

@@ -29,4 +29,6 @@ public class ActualizarUsuarioDto
 
     [Required]
     public string Estado { get; set; } = "Activo";
+
+    public string Celular { get; set; } = string.Empty;
 }
