@@ -19,6 +19,10 @@ public class GrupoResponse
 
     public int IdPlanAcademico { get; set; }
 
+    public string Materia { get; set; } = string.Empty;
+
+    public string Dias { get; set; } = string.Empty;
+
     public bool Activo { get; set; }
 
     public string EstadoTexto { get; set; } = string.Empty;
