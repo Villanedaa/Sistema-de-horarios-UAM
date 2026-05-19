@@ -90,6 +90,8 @@ public static class ExtensionesServicios
         services.AddScoped<IDocenteRepository, DocenteRepository>();
 
         services.AddScoped<IGestorDocente, GestorDocente>();
+	    services.AddScoped<IDisponibilidadDocenteRepository, DisponibilidadDocenteRepository>();
+	    services.AddScoped<IGestorDisponibilidadDocente, GestorDisponibilidadDocente>();
 
         //Horarios
         services.AddScoped<GestorHorario>();
