@@ -21,4 +21,8 @@ public interface IDocenteRepository
     Task EliminarAsync(Docente docente);
 
     Task<bool> ExistePorIdAsync(int id);
+
+    Task ActualizarMateriasAsync(int idDocente, List<int> idsMateria);
+
+    Task<List<string>> ObtenerNombresMateriasAsync(int idDocente);
 }

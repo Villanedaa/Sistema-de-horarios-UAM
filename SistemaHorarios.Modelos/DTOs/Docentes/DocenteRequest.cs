@@ -7,4 +7,8 @@ public class DocenteRequest
     public string Identificacion { get; set; } = string.Empty;
 
     public string CorreoInstitucional { get; set; } = string.Empty;
+
+    public bool Activo { get; set; } = true;
+
+    public List<int> IdsMateria { get; set; } = new();
 }

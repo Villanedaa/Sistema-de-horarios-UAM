@@ -48,7 +48,8 @@ public class UsuarioService : IUsuarioService
             ContrasenaHash =
                 _passwordService.HashPassword(dto.Contrasena),
             IdRol = dto.IdRol,
-            Estado = dto.Estado
+            Estado = dto.Estado,
+            Celular = dto.Celular
         };
 
         var usuarioCreado =
@@ -104,6 +105,7 @@ public class UsuarioService : IUsuarioService
         usuario.CorreoInstitucional = dto.CorreoInstitucional;
         usuario.IdRol = dto.IdRol;
         usuario.Estado = dto.Estado;
+        usuario.Celular = dto.Celular;
 
         return await _usuarioRepository.ActualizarAsync(usuario);
     }
@@ -220,7 +222,8 @@ public class UsuarioService : IUsuarioService
             CorreoInstitucional = usuario.CorreoInstitucional,
             IdRol = usuario.IdRol,
             Rol = usuario.Rol?.Nombre ?? string.Empty,
-            Estado = usuario.Estado
+            Estado = usuario.Estado,
+            Celular = usuario.Celular
         };
     }
 }

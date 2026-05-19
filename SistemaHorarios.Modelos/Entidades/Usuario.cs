@@ -64,4 +64,6 @@ public class Usuario
     /// Suspendido.
     /// </summary>
     public string Estado { get; set; } = "Activo";
+
+    public string Celular { get; set; } = string.Empty;
 }

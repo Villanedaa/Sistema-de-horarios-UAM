@@ -12,6 +12,8 @@ public class DashboardResumenDto
 
     public int TotalFranjasHorarias { get; set; }
 
+    public int TotalGrupos { get; set; }
+
     public int TotalPlanesAcademicos { get; set; }
 
     public int TotalSemestresPlan { get; set; }
