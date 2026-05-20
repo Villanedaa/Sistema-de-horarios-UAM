@@ -151,6 +151,7 @@ public class UsuarioService : IUsuarioService
 
         usuario.NombreCompleto = dto.NombreCompleto;
         usuario.CorreoInstitucional = dto.CorreoInstitucional;
+        usuario.Celular = dto.Celular;
 
         return await _usuarioRepository.ActualizarAsync(usuario);
     }

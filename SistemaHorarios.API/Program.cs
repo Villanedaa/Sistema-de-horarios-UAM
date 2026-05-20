@@ -1,5 +1,6 @@
 using SistemaHorarios.API.Configuraciones;
 using SistemaHorarios.API.Extensions;
+using SistemaHorarios.API.Extensiones;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +20,7 @@ builder.Services.ConfigurarBaseDatos(builder.Configuration);
 // Servicios y repositorios
 builder.Services.RegistrarServicios();
 
-// Políticas de autorización
+// Polï¿½ticas de autorizaciï¿½n
 builder.Services.ConfigurarPoliticas();
 
 
@@ -43,5 +44,8 @@ var app = builder.Build();
 
 // Pipeline HTTP
 app.ConfigurarPipeline();
+
+// Seed franjas horarias si la tabla estÃ¡ vacÃ­a
+await FranjasHorariasSeeder.SembrarAsync(app.Services);
 
 app.Run();

@@ -61,7 +61,7 @@ public class GestorHorario
         HorarioEntidad horarioModificado)
     {
         List<string> errores =
-            await ValidarModificacionHorarioAsync(idHorario, horarioModificado);
+            await ValidarModificacionAsignaturaAsync(idHorario, horarioModificado);
 
         if (errores.Count > 0)
         {
@@ -268,6 +268,46 @@ public class GestorHorario
             return errores;
 
         await ValidarReglasGeneralesAsync(horarioNuevo, errores, 0);
+
+        return errores;
+    }
+
+    // Valida las reglas para modificar solo la asignatura, sin exigir disponibilidad registrada.
+    private async Task<List<string>> ValidarModificacionAsignaturaAsync(
+        int idHorario,
+        HorarioEntidad horarioModificado)
+    {
+        List<string> errores = validadorHorario.Validar(horarioModificado);
+
+        AgregarErrorSi(
+            idHorario <= 0,
+            errores,
+            "El identificador del horario no es válido."
+        );
+
+        if (errores.Count > 0)
+            return errores;
+
+        bool existeHorario =
+            await horarioRepository.ExisteHorarioPorIdAsync(idHorario);
+
+        AgregarErrorSi(
+            !existeHorario,
+            errores,
+            "El horario que desea modificar no existe."
+        );
+
+        if (errores.Count > 0)
+            return errores;
+
+        await ValidarExistenciasAsync(horarioModificado, errores);
+
+        if (errores.Count > 0)
+            return errores;
+
+        await ValidarDocenteMateriaAsync(horarioModificado, errores);
+        await ValidarCruceDocenteAsync(horarioModificado, errores, idHorario);
+        await ValidarCruceGrupoAsync(horarioModificado, errores, idHorario);
 
         return errores;
     }
