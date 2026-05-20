@@ -56,7 +56,9 @@ public class GruposController : ControllerBase
             TipoGrupo = request.TipoGrupo,
             NumeroSemestre = request.NumeroSemestre,
             CantidadEstudiantes = request.CantidadEstudiantes,
-            IdPlanAcademico = request.IdPlanAcademico
+            IdPlanAcademico = request.IdPlanAcademico,
+            Materia = request.Materia,
+            Dias = request.Dias
         };
 
         List<string> errores = await gestorGrupo.CrearGrupoAsync(grupo);
@@ -88,6 +90,8 @@ public class GruposController : ControllerBase
             NumeroSemestre = request.NumeroSemestre,
             CantidadEstudiantes = request.CantidadEstudiantes,
             IdPlanAcademico = request.IdPlanAcademico,
+            Materia = request.Materia,
+            Dias = request.Dias,
             Activo = request.Activo
         };
 
@@ -206,6 +210,8 @@ public class GruposController : ControllerBase
             NumeroSemestre = grupo.NumeroSemestre,
             CantidadEstudiantes = grupo.CantidadEstudiantes,
             IdPlanAcademico = grupo.IdPlanAcademico,
+            Materia = grupo.Materia,
+            Dias = grupo.Dias,
             Activo = grupo.Activo,
             EstadoTexto = ObtenerEstadoTexto(grupo.Activo)
         };
@@ -223,6 +229,8 @@ public class GruposController : ControllerBase
             TipoGrupo = grupo.TipoGrupo,
             NumeroSemestre = grupo.NumeroSemestre,
             CantidadEstudiantes = grupo.CantidadEstudiantes,
+            Materia = grupo.Materia,
+            Dias = grupo.Dias,
             Activo = grupo.Activo,
             EstadoTexto = ObtenerEstadoTexto(grupo.Activo)
         };

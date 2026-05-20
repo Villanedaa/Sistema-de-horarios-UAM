@@ -16,4 +16,8 @@ public class CrearGrupoRequest
     public int CantidadEstudiantes { get; set; }
 
     public int IdPlanAcademico { get; set; }
+
+    public string Materia { get; set; } = string.Empty;
+
+    public string Dias { get; set; } = string.Empty;
 }

@@ -87,13 +87,8 @@ public static class ExtensionesServicios
 
         // Docentes
         services.AddScoped<IDocenteRepository, DocenteRepository>();
-<<<<<<< Updated upstream
-        services.AddScoped<IDisponibilidadDocenteRepository, DisponibilidadDocenteRepository>();
-        services.AddScoped<IGestorDocente, GestorDocente>();
-=======
         services.AddScoped<IGestorDocente, GestorDocente>();
         services.AddScoped<IDisponibilidadDocenteRepository, DisponibilidadDocenteRepository>();
->>>>>>> Stashed changes
         services.AddScoped<IGestorDisponibilidadDocente, GestorDisponibilidadDocente>();
 
         //Horarios
