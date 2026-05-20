@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using SistemaHorarios.Logica.Negocio.Grupos;
 using SistemaHorarios.Modelos.DTOs.Grupos;
 using SistemaHorarios.Modelos.Entidades;
@@ -6,6 +7,7 @@ using SistemaHorarios.Modelos.Entidades;
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Administrador,Coordinador")]
 [Route("api/grupos")]
 public class GruposController : ControllerBase
 {
@@ -229,6 +231,7 @@ public class GruposController : ControllerBase
             TipoGrupo = grupo.TipoGrupo,
             NumeroSemestre = grupo.NumeroSemestre,
             CantidadEstudiantes = grupo.CantidadEstudiantes,
+            IdPlanAcademico = grupo.IdPlanAcademico,
             Materia = grupo.Materia,
             Dias = grupo.Dias,
             Activo = grupo.Activo,
@@ -243,7 +246,10 @@ public class GruposController : ControllerBase
         {
             IdGrupo = grupo.IdGrupo,
             Codigo = grupo.Codigo,
-            Nombre = grupo.Nombre
+            Nombre = grupo.Nombre,
+            NumeroSemestre = grupo.NumeroSemestre,
+            IdPlanAcademico = grupo.IdPlanAcademico,
+            Jornada = grupo.Jornada
         };
     }
 

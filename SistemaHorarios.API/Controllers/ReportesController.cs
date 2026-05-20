@@ -7,7 +7,7 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[AllowAnonymous]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class ReportesController : ControllerBase
 {
     private readonly IReporteService _reporteService;

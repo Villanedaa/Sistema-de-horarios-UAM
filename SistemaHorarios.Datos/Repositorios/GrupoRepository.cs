@@ -96,6 +96,8 @@ public class GrupoRepository
         grupoActual.NumeroSemestre = grupoModificado.NumeroSemestre;
         grupoActual.CantidadEstudiantes = grupoModificado.CantidadEstudiantes;
         grupoActual.IdPlanAcademico = grupoModificado.IdPlanAcademico;
+        grupoActual.Materia = grupoModificado.Materia;
+        grupoActual.Dias = grupoModificado.Dias;
         grupoActual.Activo = grupoModificado.Activo;
 
         await contexto.SaveChangesAsync();

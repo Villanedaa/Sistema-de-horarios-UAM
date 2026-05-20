@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
+using Microsoft.AspNetCore.Authorization;
 using SistemaHorarios.Logica.Negocio.Docentes;
 
 using SistemaHorarios.Modelos.DTOs.Docentes;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Administrador,Coordinador")]
 [Route("api/[controller]")]
 public class DocentesController : ControllerBase
 {
@@ -100,11 +103,20 @@ public class DocentesController : ControllerBase
         ActualizarDisponibilidad(
             int id,
 
-            ActualizarDisponibilidadDocenteRequest request)
+        ActualizarDisponibilidadDocenteRequest request)
     {
         await _gestorDisponibilidad
             .ActualizarDisponibilidadAsync(id, request);
 
-        return NoContent();
+        var disponibilidad =
+            await _gestorDisponibilidad
+                .ObtenerDisponibilidadAsync(id);
+
+        return Ok(new ApiResponse<List<DisponibilidadDocenteResponse>>
+        {
+            Success = true,
+            Message = "Disponibilidad docente actualizada correctamente",
+            Data = disponibilidad
+        });
     }
 }

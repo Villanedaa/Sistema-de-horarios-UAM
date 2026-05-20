@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using SistemaHorarios.API.DTOs.Materias;
 using SistemaHorarios.Logica.Negocio.Materias;
 using SistemaHorarios.Modelos.Entidades;
@@ -6,6 +7,7 @@ using SistemaHorarios.Modelos.Entidades;
 namespace SistemaHorarios.API.Controllers
 {
     [ApiController]
+    [Authorize(Roles = "Administrador,Coordinador")]
     [Route("api/materias")]
     public class MateriasController : ControllerBase
     {

@@ -1,13 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.PlanAcademico.Interfaces;
 using SistemaHorarios.Modelos.DTOs.PlanAcademico;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Administrador")]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class PlanAcademicoController : ControllerBase
 {
     private readonly IPlanAcademicoService _planAcademicoService;
@@ -19,16 +20,16 @@ public class PlanAcademicoController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<PlanAcademicoResponseDto>>> ObtenerTodos()
+    public async Task<ActionResult<ApiResponse<List<PlanAcademicoResponseDto>>>> ObtenerTodos()
     {
         var planes =
             await _planAcademicoService.ObtenerTodosAsync();
 
-        return Ok(planes);
+        return Ok(OkResponse("Planes académicos obtenidos correctamente.", planes));
     }
 
     [HttpGet("{idPlanAcademico}")]
-    public async Task<ActionResult<PlanAcademicoResponseDto>> ObtenerPorId(
+    public async Task<ActionResult<ApiResponse<PlanAcademicoResponseDto>>> ObtenerPorId(
         int idPlanAcademico)
     {
         var plan =
@@ -36,24 +37,24 @@ public class PlanAcademicoController : ControllerBase
 
         if (plan == null)
         {
-            return NotFound("Plan académico no encontrado.");
+            return NotFound(ErrorResponse<PlanAcademicoResponseDto>("Plan académico no encontrado."));
         }
 
-        return Ok(plan);
+        return Ok(OkResponse("Plan académico obtenido correctamente.", plan));
     }
 
     [HttpPost]
-    public async Task<ActionResult<PlanAcademicoResponseDto>> Crear(
+    public async Task<ActionResult<ApiResponse<PlanAcademicoResponseDto>>> Crear(
         CrearPlanAcademicoDto dto)
     {
         var planCreado =
             await _planAcademicoService.CrearAsync(dto);
 
-        return Ok(planCreado);
+        return Ok(OkResponse("Plan académico creado correctamente.", planCreado));
     }
 
     [HttpPut("{idPlanAcademico}")]
-    public async Task<ActionResult> Actualizar(
+    public async Task<ActionResult<ApiResponse<object>>> Actualizar(
         int idPlanAcademico,
         ActualizarPlanAcademicoDto dto)
     {
@@ -64,14 +65,14 @@ public class PlanAcademicoController : ControllerBase
 
         if (!actualizado)
         {
-            return NotFound("Plan académico no encontrado.");
+            return NotFound(ErrorResponse<object>("Plan académico no encontrado."));
         }
 
-        return Ok("Plan académico actualizado correctamente.");
+        return Ok(OkResponse<object>("Plan académico actualizado correctamente.", null));
     }
 
     [HttpDelete("{idPlanAcademico}")]
-    public async Task<ActionResult> Eliminar(
+    public async Task<ActionResult<ApiResponse<object>>> Eliminar(
         int idPlanAcademico)
     {
         bool eliminado =
@@ -79,40 +80,54 @@ public class PlanAcademicoController : ControllerBase
 
         if (!eliminado)
         {
-            return NotFound("Plan académico no encontrado.");
+            return NotFound(ErrorResponse<object>("Plan académico no encontrado."));
         }
 
-        return Ok("Plan académico eliminado correctamente.");
+        return Ok(OkResponse<object>("Plan académico eliminado correctamente.", null));
     }
 
     [HttpPost("{idPlanAcademico}/semestres")]
-    public async Task<ActionResult<SemestrePlanResponseDto>> AgregarSemestre(
+    public async Task<ActionResult<ApiResponse<SemestrePlanResponseDto>>> AgregarSemestre(
         int idPlanAcademico,
         CrearSemestrePlanDto dto)
     {
-        var semestreCreado =
-            await _planAcademicoService.AgregarSemestreAsync(
-                idPlanAcademico,
-                dto);
+        try
+        {
+            var semestreCreado =
+                await _planAcademicoService.AgregarSemestreAsync(
+                    idPlanAcademico,
+                    dto);
 
-        return Ok(semestreCreado);
+            return Ok(OkResponse("Semestre agregado correctamente.", semestreCreado));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ErrorResponse<SemestrePlanResponseDto>(ex.Message));
+        }
     }
 
     [HttpPost("semestres/{idSemestrePlan}/materias")]
-    public async Task<ActionResult<MateriaPlanResponseDto>> AgregarMateriaASemestre(
+    public async Task<ActionResult<ApiResponse<MateriaPlanResponseDto>>> AgregarMateriaASemestre(
         int idSemestrePlan,
         AgregarMateriaPlanDto dto)
     {
-        var materiaAgregada =
-            await _planAcademicoService.AgregarMateriaASemestreAsync(
-                idSemestrePlan,
-                dto);
+        try
+        {
+            var materiaAgregada =
+                await _planAcademicoService.AgregarMateriaASemestreAsync(
+                    idSemestrePlan,
+                    dto);
 
-        return Ok(materiaAgregada);
+            return Ok(OkResponse("Materia agregada al semestre correctamente.", materiaAgregada));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ErrorResponse<MateriaPlanResponseDto>(ex.Message));
+        }
     }
 
     [HttpDelete("materias/{idMateriaPlan}")]
-    public async Task<ActionResult> EliminarMateriaDelPlan(
+    public async Task<ActionResult<ApiResponse<object>>> EliminarMateriaDelPlan(
         int idMateriaPlan)
     {
         bool eliminada =
@@ -121,9 +136,28 @@ public class PlanAcademicoController : ControllerBase
 
         if (!eliminada)
         {
-            return NotFound("Materia del plan no encontrada.");
+            return NotFound(ErrorResponse<object>("Materia del plan no encontrada."));
         }
 
-        return Ok("Materia eliminada del plan correctamente.");
+        return Ok(OkResponse<object>("Materia eliminada del plan correctamente.", null));
+    }
+
+    private static ApiResponse<T> OkResponse<T>(string message, T? data)
+    {
+        return new ApiResponse<T>
+        {
+            Success = true,
+            Message = message,
+            Data = data
+        };
+    }
+
+    private static ApiResponse<T> ErrorResponse<T>(string message)
+    {
+        return new ApiResponse<T>
+        {
+            Success = false,
+            Message = message
+        };
     }
 }

@@ -1,11 +1,15 @@
 using SistemaHorarios.API.Configuraciones;
 using SistemaHorarios.API.Extensions;
 using SistemaHorarios.API.Extensiones;
+using SistemaHorarios.API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controladores
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ApiResponseFilter>();
+});
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();

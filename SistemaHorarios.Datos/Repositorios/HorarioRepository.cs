@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Modelos.Entidades;
+using System.Globalization;
+using System.Text;
 
 namespace SistemaHorarios.Datos.Repositorios;
 
@@ -183,17 +185,23 @@ public class HorarioRepository
 
     // Verifica si el docente está disponible en la franja indicada.
     public async Task<bool> ExisteDisponibilidadDocenteAsync(
-        int idDocente,
-        FranjaHoraria franjaHoraria)
+    int idDocente,
+    FranjaHoraria franjaHoraria)
     {
-        return await contexto.DisponibilidadesDocentes
-            .AnyAsync(disponibilidad =>
+        var disponibilidades = await contexto.DisponibilidadesDocentes
+            .Where(disponibilidad =>
                 disponibilidad.IdDocente == idDocente &&
-                disponibilidad.Disponible &&
-                disponibilidad.Dia.ToLower() == franjaHoraria.DiaSemana.ToLower() &&
-                disponibilidad.HoraInicio <= franjaHoraria.HoraInicio &&
-                disponibilidad.HoraFin >= franjaHoraria.HoraFin
-            );
+                disponibilidad.Disponible
+            )
+            .ToListAsync();
+
+        var diaFranja = NormalizarDia(franjaHoraria.DiaSemana);
+
+        return disponibilidades.Any(disponibilidad =>
+            NormalizarDia(disponibilidad.Dia) == diaFranja &&
+            disponibilidad.HoraInicio <= franjaHoraria.HoraInicio &&
+            disponibilidad.HoraFin >= franjaHoraria.HoraFin
+        );
     }
 
     // Verifica si el docente ya tiene clase en la misma franja.
@@ -230,6 +238,26 @@ public class HorarioRepository
     public async Task CrearHorarioAsync(Horario horario)
     {
         await contexto.Horarios.AddAsync(horario);
+        await contexto.SaveChangesAsync();
+    }
+
+    // Desactiva los horarios activos de un grupo para regenerar sin duplicados.
+    public async Task DesactivarHorariosActivosPorGrupoAsync(int idGrupo)
+    {
+        var horarios = await contexto.Horarios
+            .Where(horario =>
+                horario.IdGrupo == idGrupo &&
+                horario.Activo)
+            .ToListAsync();
+
+        foreach (var horario in horarios)
+        {
+            horario.Activo = false;
+            horario.Observacion = string.IsNullOrWhiteSpace(horario.Observacion)
+                ? "Reemplazado por regeneración automática"
+                : $"{horario.Observacion} | Reemplazado por regeneración automática";
+        }
+
         await contexto.SaveChangesAsync();
     }
 
@@ -311,49 +339,37 @@ public class HorarioRepository
             .FirstOrDefaultAsync(g => g.IdGrupo == idGrupo && g.Activo);
     }
 
+    // Obtiene el semestre del plan que corresponde al grupo.
+    public async Task<SemestrePlan?> ObtenerSemestrePlanDelGrupoAsync(Grupo grupo)
+    {
+        return await contexto.SemestresPlan
+            .FirstOrDefaultAsync(s =>
+                s.IdPlanAcademico == grupo.IdPlanAcademico &&
+                s.NumeroSemestre == grupo.NumeroSemestre);
+    }
+
     // Obtiene las materias activas del semestre al que pertenece el grupo.
-    // Si no hay SemestrePlan configurado, busca por el nombre de materia del grupo.
     public async Task<List<Materia>> ObtenerMateriasDelGrupoAsync(int idGrupo)
     {
         var grupo = await contexto.Grupos
             .FirstOrDefaultAsync(g => g.IdGrupo == idGrupo && g.Activo);
         if (grupo == null) return new List<Materia>();
 
-        var semestrePlan = await contexto.SemestresPlan
-            .FirstOrDefaultAsync(s =>
-                s.IdPlanAcademico == grupo.IdPlanAcademico &&
-                s.NumeroSemestre == grupo.NumeroSemestre);
+        var semestrePlan = await ObtenerSemestrePlanDelGrupoAsync(grupo);
 
-        if (semestrePlan != null)
+        if (semestrePlan == null)
         {
-            var materiasPlan = await contexto.MateriasPlan
-                .Include(mp => mp.Materia)
-                .Where(mp =>
-                    mp.IdSemestrePlan == semestrePlan.IdSemestrePlan &&
-                    mp.Materia != null &&
-                    mp.Materia.Activa)
-                .Select(mp => mp.Materia!)
-                .ToListAsync();
-
-            if (materiasPlan.Count > 0)
-                return materiasPlan;
+            return new List<Materia>();
         }
 
-        // Fallback: buscar por el campo Materia del grupo (nombre o código)
-        if (!string.IsNullOrWhiteSpace(grupo.Materia))
-        {
-            string nombreBuscar = grupo.Materia.Trim().ToLower();
-            var materiasPorNombre = await contexto.Materias
-                .Where(m => m.Activa &&
-                    (m.Nombre.ToLower() == nombreBuscar ||
-                     m.Codigo.ToLower() == nombreBuscar))
-                .ToListAsync();
-
-            if (materiasPorNombre.Count > 0)
-                return materiasPorNombre;
-        }
-
-        return new List<Materia>();
+        return await contexto.MateriasPlan
+            .Include(mp => mp.Materia)
+            .Where(mp =>
+                mp.IdSemestrePlan == semestrePlan.IdSemestrePlan &&
+                mp.Materia != null &&
+                mp.Materia.Activa)
+            .Select(mp => mp.Materia!)
+            .ToListAsync();
     }
 
     // Obtiene los docentes activos asignados a una materia.
@@ -373,11 +389,63 @@ public class HorarioRepository
     // Obtiene todas las franjas horarias activas ordenadas por día y hora.
     public async Task<List<FranjaHoraria>> ObtenerFranjasActivasAsync()
     {
-        return await contexto.FranjasHorarias
+        var franjas = await contexto.FranjasHorarias
             .Where(f => f.Activa)
-            .OrderBy(f => f.DiaSemana)
-            .ThenBy(f => f.HoraInicio)
             .ToListAsync();
+
+        return franjas
+            .OrderBy(f => ObtenerOrdenDia(f.DiaSemana))
+            .ThenBy(f => f.HoraInicio)
+            .ToList();
+    }
+
+    private static int ObtenerOrdenDia(string diaSemana)
+    {
+        var dia = NormalizarDia(diaSemana);
+
+        return dia switch
+        {
+            "lunes" => 1,
+            "lun" => 1,
+
+            "martes" => 2,
+            "mar" => 2,
+
+            "miercoles" => 3,
+            "mie" => 3,
+
+            "jueves" => 4,
+            "jue" => 4,
+
+            "viernes" => 5,
+            "vie" => 5,
+
+            "sabado" => 6,
+            "sab" => 6,
+
+            "domingo" => 7,
+            "dom" => 7,
+
+            _ => 99
+        };
+    }
+
+    private static string NormalizarDia(string dia)
+    {
+        string texto = (dia ?? string.Empty).Trim().ToLowerInvariant();
+        string normalizado = texto.Normalize(NormalizationForm.FormD);
+        StringBuilder builder = new();
+
+        foreach (char caracter in normalizado)
+        {
+            UnicodeCategory categoria = CharUnicodeInfo.GetUnicodeCategory(caracter);
+            if (categoria != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(caracter);
+            }
+        }
+
+        return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 
     // Retorna los IDs de franjas ya usadas por un grupo (en horarios activos).

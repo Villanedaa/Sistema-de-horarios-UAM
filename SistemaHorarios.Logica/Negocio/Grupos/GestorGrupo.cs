@@ -197,7 +197,16 @@ public class GestorGrupo
         await ValidarCodigoDuplicadoAsync(grupo.Codigo, errores, idGrupoExcluir);
         ValidarJornadaPermitida(grupo.Jornada, errores);
         ValidarTipoGrupoPermitido(grupo.TipoGrupo, errores);
-        await ValidarPlanAcademicoExistenteAsync(grupo.IdPlanAcademico, errores);
+        bool planExiste =
+            await ValidarPlanAcademicoExistenteAsync(grupo.IdPlanAcademico, errores);
+
+        if (planExiste)
+        {
+            await ValidarSemestrePlanExistenteAsync(
+                grupo.IdPlanAcademico,
+                grupo.NumeroSemestre,
+                errores);
+        }
     }
 
     // Valida que no exista otro grupo con el mismo código.
@@ -248,17 +257,37 @@ public class GestorGrupo
     }
 
     // Valida que el plan académico asociado exista.
-    private async Task ValidarPlanAcademicoExistenteAsync(
+    private async Task<bool> ValidarPlanAcademicoExistenteAsync(
         int idPlanAcademico,
         List<string> errores)
     {
         SistemaHorarios.Modelos.Entidades.PlanAcademico? planAcademico =
             await planAcademicoRepository.ObtenerPorIdAsync(idPlanAcademico);
 
+        if (planAcademico == null)
+        {
+            errores.Add("El plan académico asociado no existe.");
+            return false;
+        }
+
+        return true;
+    }
+
+    // Valida que el número de semestre exista dentro del plan seleccionado.
+    private async Task ValidarSemestrePlanExistenteAsync(
+        int idPlanAcademico,
+        int numeroSemestre,
+        List<string> errores)
+    {
+        SemestrePlan? semestrePlan =
+            await planAcademicoRepository.ObtenerSemestrePorNumeroAsync(
+                idPlanAcademico,
+                numeroSemestre);
+
         AgregarErrorSi(
-            planAcademico == null,
+            semestrePlan == null,
             errores,
-            "El plan académico asociado no existe."
+            "El semestre seleccionado no existe dentro del plan académico asociado."
         );
     }
 

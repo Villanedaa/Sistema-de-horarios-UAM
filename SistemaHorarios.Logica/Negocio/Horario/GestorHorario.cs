@@ -158,80 +158,92 @@ public class GestorHorario
     }
 
     // Genera automáticamente bloques de horario para un grupo basándose en su plan académico.
-    public async Task<(int Generados, List<string> Errores)> GenerarHorariosAsync(int idGrupo)
+    public async Task<(int Generados, List<string> Advertencias, List<HorarioEntidad> Horarios)> GenerarHorariosAsync(int idGrupo)
     {
-        var errores = new List<string>();
+        var advertencias = new List<string>();
+        var horariosGenerados = new List<HorarioEntidad>();
         int generados = 0;
 
         var grupo = await horarioRepository.ObtenerGrupoPorIdAsync(idGrupo);
         if (grupo == null)
         {
-            errores.Add("El grupo no existe o está inactivo.");
-            return (0, errores);
+            advertencias.Add("El grupo no existe o está inactivo.");
+            return (0, advertencias, horariosGenerados);
+        }
+
+        await ValidarGrupoListoParaGeneracionAsync(grupo, advertencias);
+        if (advertencias.Count > 0)
+        {
+            return (0, advertencias, horariosGenerados);
         }
 
         var materias = await horarioRepository.ObtenerMateriasDelGrupoAsync(idGrupo);
         if (materias.Count == 0)
         {
-            errores.Add("No hay materias definidas para este grupo en el plan académico.");
-            return (0, errores);
+            advertencias.Add(
+                "No hay materias activas en el semestre del plan académico asociado al grupo. Agregue materias al semestre del plan antes de generar horarios.");
+            return (0, advertencias, horariosGenerados);
         }
 
         var todasFranjas = await horarioRepository.ObtenerFranjasActivasAsync();
         if (todasFranjas.Count == 0)
         {
-            errores.Add("No hay franjas horarias activas en el sistema.");
-            return (0, errores);
+            advertencias.Add("No hay franjas horarias activas en el sistema.");
+            return (0, advertencias, horariosGenerados);
         }
 
-        var franjasUsadasGrupo = await horarioRepository.ObtenerFranjasUsadasPorGrupoAsync(idGrupo);
+        await horarioRepository.DesactivarHorariosActivosPorGrupoAsync(idGrupo);
+
+        var franjasUsadasGrupo = new HashSet<int>();
         var franjasUsadasDocentes = new Dictionary<int, HashSet<int>>();
 
         foreach (var materia in materias)
         {
             var docentes = await horarioRepository.ObtenerDocentesPorMateriaAsync(materia.IdMateria);
-            if (docentes.Count == 0) continue;
+            if (docentes.Count == 0)
+            {
+                advertencias.Add($"No hay docentes asignados para la materia {materia.Nombre}.");
+                continue;
+            }
 
-            int blocksNeeded = Math.Max(1, materia.IntensidadHorariaSemanal);
+            TimeSpan horasPendientes =
+                TimeSpan.FromHours(Math.Max(0, materia.IntensidadHorariaSemanal));
+
+            if (horasPendientes <= TimeSpan.Zero)
+            {
+                advertencias.Add($"La materia {materia.Nombre} no tiene intensidad horaria semanal válida.");
+                continue;
+            }
+
+            TimeSpan horasAsignadas = TimeSpan.Zero;
             int blocksCreated = 0;
+            bool encontroFranjaConDuracionUtil = false;
+            bool encontroDocenteDisponible = false;
 
             foreach (var franja in todasFranjas)
             {
-                if (blocksCreated >= blocksNeeded) break;
+                if (horasPendientes <= TimeSpan.Zero) break;
                 if (franjasUsadasGrupo.Contains(franja.IdFranjaHoraria)) continue;
 
-                DocenteEntidad? docenteElegido = null;
+                TimeSpan duracionFranja = franja.HoraFin - franja.HoraInicio;
+                if (duracionFranja <= TimeSpan.Zero) continue;
 
-                // Primera pasada: docente con disponibilidad registrada
-                foreach (var docente in docentes)
+                if (duracionFranja > horasPendientes)
                 {
-                    if (!franjasUsadasDocentes.ContainsKey(docente.IdDocente))
-                        franjasUsadasDocentes[docente.IdDocente] =
-                            await horarioRepository.ObtenerFranjasUsadasPorDocenteAsync(docente.IdDocente);
-
-                    if (franjasUsadasDocentes[docente.IdDocente].Contains(franja.IdFranjaHoraria))
-                        continue;
-
-                    bool disponible = await horarioRepository.ExisteDisponibilidadDocenteAsync(
-                        docente.IdDocente, franja);
-                    if (disponible) { docenteElegido = docente; break; }
+                    continue;
                 }
 
-                // Segunda pasada: cualquier docente sin conflicto (sin exigir disponibilidad)
-                if (docenteElegido == null)
-                {
-                    foreach (var docente in docentes)
-                    {
-                        if (!franjasUsadasDocentes.ContainsKey(docente.IdDocente))
-                            franjasUsadasDocentes[docente.IdDocente] =
-                                await horarioRepository.ObtenerFranjasUsadasPorDocenteAsync(docente.IdDocente);
+                encontroFranjaConDuracionUtil = true;
 
-                        if (!franjasUsadasDocentes[docente.IdDocente].Contains(franja.IdFranjaHoraria))
-                        { docenteElegido = docente; break; }
-                    }
-                }
+                DocenteEntidad? docenteElegido =
+                    await SeleccionarDocenteDisponibleAsync(
+                        docentes,
+                        franja,
+                        franjasUsadasDocentes);
 
                 if (docenteElegido == null) continue;
+
+                encontroDocenteDisponible = true;
 
                 var horario = new HorarioEntidad
                 {
@@ -245,17 +257,108 @@ public class GestorHorario
 
                 await horarioRepository.CrearHorarioAsync(horario);
 
+                HorarioEntidad? horarioCreado =
+                    await horarioRepository.ObtenerHorarioPorIdAsync(horario.IdHorario);
+
+                horariosGenerados.Add(horarioCreado ?? horario);
+
                 franjasUsadasGrupo.Add(franja.IdFranjaHoraria);
                 franjasUsadasDocentes[docenteElegido.IdDocente].Add(franja.IdFranjaHoraria);
+                horasAsignadas += duracionFranja;
+                horasPendientes -= duracionFranja;
                 blocksCreated++;
                 generados++;
+            }
+
+            if (horasPendientes > TimeSpan.Zero)
+            {
+                if (blocksCreated == 0 && !encontroFranjaConDuracionUtil)
+                {
+                    advertencias.Add(
+                        $"No hay franjas suficientes para completar la intensidad horaria de la materia {materia.Nombre}.");
+                }
+                else if (blocksCreated == 0 && !encontroDocenteDisponible)
+                {
+                    advertencias.Add(
+                        $"No hay docente disponible para la materia {materia.Nombre} en las franjas activas.");
+                }
+                else
+                {
+                    advertencias.Add(
+                        $"La materia {materia.Nombre} solo completó {horasAsignadas.TotalHours:0.##} de {materia.IntensidadHorariaSemanal} horas semanales.");
+                }
             }
         }
 
         if (generados == 0)
-            errores.Add("No fue posible asignar bloques. Verifique que los docentes estén asignados a las materias del grupo.");
+        {
+            advertencias.Add("No fue posible generar el horario con los datos actuales.");
+        }
 
-        return (generados, errores);
+        return (generados, advertencias, horariosGenerados);
+    }
+
+    private async Task<DocenteEntidad?> SeleccionarDocenteDisponibleAsync(
+        List<DocenteEntidad> docentes,
+        FranjaHoraria franja,
+        Dictionary<int, HashSet<int>> franjasUsadasDocentes)
+    {
+        foreach (var docente in docentes)
+        {
+            if (!franjasUsadasDocentes.ContainsKey(docente.IdDocente))
+            {
+                franjasUsadasDocentes[docente.IdDocente] =
+                    await horarioRepository.ObtenerFranjasUsadasPorDocenteAsync(docente.IdDocente);
+            }
+
+            if (franjasUsadasDocentes[docente.IdDocente].Contains(franja.IdFranjaHoraria))
+            {
+                continue;
+            }
+
+            bool disponible = await horarioRepository.ExisteDisponibilidadDocenteAsync(
+                docente.IdDocente,
+                franja);
+
+            if (disponible)
+            {
+                return docente;
+            }
+        }
+
+        return null;
+    }
+
+    // Verifica que el grupo apunte a un plan y a un semestre real del plan.
+    private async Task ValidarGrupoListoParaGeneracionAsync(
+        Grupo grupo,
+        List<string> errores)
+    {
+        AgregarErrorSi(
+            grupo.IdPlanAcademico <= 0,
+            errores,
+            "El grupo debe estar asociado a un plan académico antes de generar horarios."
+        );
+
+        AgregarErrorSi(
+            grupo.NumeroSemestre <= 0,
+            errores,
+            "El grupo debe tener un número de semestre válido antes de generar horarios."
+        );
+
+        if (errores.Count > 0)
+        {
+            return;
+        }
+
+        SemestrePlan? semestrePlan =
+            await horarioRepository.ObtenerSemestrePlanDelGrupoAsync(grupo);
+
+        AgregarErrorSi(
+            semestrePlan == null,
+            errores,
+            "El semestre del grupo no existe dentro del plan académico asociado."
+        );
     }
 
     // Valida las reglas necesarias para crear un horario.

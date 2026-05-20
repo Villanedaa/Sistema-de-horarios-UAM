@@ -100,7 +100,7 @@ public class PlanAcademicoService : IPlanAcademicoService
 
         if (plan == null)
         {
-            throw new Exception("El plan académico no existe.");
+            throw new InvalidOperationException("El plan académico no existe.");
         }
 
         var semestreExistente =
@@ -110,7 +110,7 @@ public class PlanAcademicoService : IPlanAcademicoService
 
         if (semestreExistente != null)
         {
-            throw new Exception("El semestre ya existe en este plan académico.");
+            throw new InvalidOperationException("El semestre ya existe en este plan académico.");
         }
 
         var semestre = new SemestrePlanEntidad
@@ -133,7 +133,7 @@ public class PlanAcademicoService : IPlanAcademicoService
 
         if (semestre == null)
         {
-            throw new Exception("El semestre no existe.");
+            throw new InvalidOperationException("El semestre no existe.");
         }
 
         var materia =
@@ -141,7 +141,7 @@ public class PlanAcademicoService : IPlanAcademicoService
 
         if (materia == null)
         {
-            throw new Exception("La materia no existe.");
+            throw new InvalidOperationException("La materia no existe.");
         }
 
         bool yaExiste =
@@ -151,7 +151,7 @@ public class PlanAcademicoService : IPlanAcademicoService
 
         if (yaExiste)
         {
-            throw new Exception("La materia ya está agregada a este semestre.");
+            throw new InvalidOperationException("La materia ya está agregada a este semestre.");
         }
 
         var materiaPlan = new MateriaPlanEntidad

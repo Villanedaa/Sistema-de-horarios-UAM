@@ -75,6 +75,21 @@ public class GestorDisponibilidadDocente
             throw new NotFoundException(
                 "Docente no encontrado");
 
+        if (request?.Disponibilidades == null)
+            throw new InvalidOperationException(
+                "Debe enviar la lista de disponibilidades");
+
+        foreach (var disponibilidad in request.Disponibilidades)
+        {
+            if (string.IsNullOrWhiteSpace(disponibilidad.Dia))
+                throw new InvalidOperationException(
+                    "El día de la disponibilidad es obligatorio");
+
+            if (disponibilidad.HoraFin <= disponibilidad.HoraInicio)
+                throw new InvalidOperationException(
+                    "La hora fin de la disponibilidad debe ser mayor que la hora inicio");
+        }
+
         await _repository
             .EliminarPorDocenteAsync(idDocente);
 
@@ -83,7 +98,7 @@ public class GestorDisponibilidadDocente
             {
                 IdDocente = idDocente,
 
-                Dia = x.Dia,
+                Dia = x.Dia.Trim(),
 
                 HoraInicio = x.HoraInicio,
 
@@ -96,3 +111,4 @@ public class GestorDisponibilidadDocente
             .CrearRangoAsync(disponibilidades);
     }
 }
+

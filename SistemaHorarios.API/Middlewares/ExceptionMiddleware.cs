@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using SistemaHorarios.Logica.Excepciones;
 
 namespace SistemaHorarios.API.Middleware;
 
@@ -29,8 +30,13 @@ public class ExceptionMiddleware
         Exception exception)
     {
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode =
-            (int)HttpStatusCode.InternalServerError;
+        context.Response.StatusCode = exception switch
+        {
+            NotFoundException => (int)HttpStatusCode.NotFound,
+            InvalidOperationException => (int)HttpStatusCode.BadRequest,
+            ArgumentException => (int)HttpStatusCode.BadRequest,
+            _ => (int)HttpStatusCode.InternalServerError
+        };
 
         var respuesta = new
         {

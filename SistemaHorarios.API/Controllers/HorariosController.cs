@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using SistemaHorarios.Logica.Negocio.Horarios;
 using SistemaHorarios.Modelos.DTOs.Horarios;
+using SistemaHorarios.Modelos.Responses;
 using HorarioEntidad = SistemaHorarios.Modelos.Entidades.Horario;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Administrador,Coordinador")]
 [Route("api/horarios")]
 public class HorariosController : ControllerBase
 {
@@ -187,12 +190,40 @@ public class HorariosController : ControllerBase
     [HttpPost("generar/{idGrupo}")]
     public async Task<IActionResult> GenerarHorario(int idGrupo)
     {
-        var (generados, errores) = await gestorHorario.GenerarHorariosAsync(idGrupo);
+        var (generados, advertencias, horarios) =
+            await gestorHorario.GenerarHorariosAsync(idGrupo);
 
-        if (errores.Count > 0 && generados == 0)
-            return BadRequest(new { Errores = errores });
+        if (generados == 0)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "No fue posible generar el horario.",
+                Data = new
+                {
+                    Generados = generados,
+                    Advertencias = advertencias
+                }
+            });
+        }
 
-        return Ok(new { Generados = generados, Advertencias = errores });
+        List<HorarioResponse> horariosRespuesta = horarios
+            .Select(MapearHorarioResponse)
+            .ToList();
+
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = generados == 1
+                ? "Se generó 1 bloque de horario."
+                : $"Se generaron {generados} bloques de horario.",
+            Data = new
+            {
+                Generados = generados,
+                Advertencias = advertencias,
+                Horarios = horariosRespuesta
+            }
+        });
     }
 
     // Lista los horarios asociados a un grupo.

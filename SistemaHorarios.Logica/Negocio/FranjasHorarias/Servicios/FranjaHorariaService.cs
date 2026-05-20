@@ -28,7 +28,10 @@ public class FranjaHorariaService
             await _franjaHorariaRepository
                 .ObtenerFranjasHorarias();
 
-        return franjas.Select(f =>
+        return franjas
+            .OrderBy(f => ObtenerOrdenDia(f.DiaSemana))
+            .ThenBy(f => f.HoraInicio)
+            .Select(f =>
             new FranjaHorariaResponseDto
             {
                 IdFranjaHoraria =
@@ -79,18 +82,25 @@ public class FranjaHorariaService
     public async Task CrearFranjaHoraria(
         CrearFranjaHorariaDto dto)
     {
-        // Validación importante
-        if (dto.HoraFin <= dto.HoraInicio)
+        ValidarDatosBasicos(dto.DiaSemana, dto.HoraInicio, dto.HoraFin);
+
+        bool existeDuplicada =
+            await _franjaHorariaRepository.ExisteDuplicada(
+                dto.DiaSemana,
+                dto.HoraInicio,
+                dto.HoraFin);
+
+        if (existeDuplicada)
         {
-            throw new Exception(
-                "La hora fin debe ser mayor que la hora inicio"
+            throw new InvalidOperationException(
+                "Ya existe una franja horaria activa o registrada con el mismo día, hora inicio y hora fin"
             );
         }
 
         var franjaHoraria =
             new FranjaHoraria
             {
-                DiaSemana = dto.DiaSemana,
+                DiaSemana = dto.DiaSemana.Trim(),
 
                 HoraInicio = dto.HoraInicio,
 
@@ -115,20 +125,29 @@ public class FranjaHorariaService
 
         if (franja == null)
         {
-            throw new Exception(
+            throw new InvalidOperationException(
                 "Franja horaria no encontrada"
             );
         }
 
-        if (dto.HoraFin <= dto.HoraInicio)
+        ValidarDatosBasicos(dto.DiaSemana, dto.HoraInicio, dto.HoraFin);
+
+        bool existeDuplicada =
+            await _franjaHorariaRepository.ExisteDuplicada(
+                dto.DiaSemana,
+                dto.HoraInicio,
+                dto.HoraFin,
+                idFranjaHoraria);
+
+        if (existeDuplicada)
         {
-            throw new Exception(
-                "La hora fin debe ser mayor que la hora inicio"
+            throw new InvalidOperationException(
+                "Ya existe una franja horaria con el mismo día, hora inicio y hora fin"
             );
         }
 
         franja.DiaSemana =
-            dto.DiaSemana;
+            dto.DiaSemana.Trim();
 
         franja.HoraInicio =
             dto.HoraInicio;
@@ -156,7 +175,7 @@ public class FranjaHorariaService
 
         if (franja == null)
         {
-            throw new Exception(
+            throw new InvalidOperationException(
                 "Franja horaria no encontrada"
             );
         }
@@ -166,4 +185,47 @@ public class FranjaHorariaService
                 franja
             );
     }
+
+    private static void ValidarDatosBasicos(
+        string diaSemana,
+        TimeSpan horaInicio,
+        TimeSpan horaFin)
+    {
+        if (string.IsNullOrWhiteSpace(diaSemana))
+        {
+            throw new InvalidOperationException("El día de la semana es obligatorio");
+        }
+
+        if (horaInicio == TimeSpan.Zero && horaFin == TimeSpan.Zero)
+        {
+            throw new InvalidOperationException("La hora inicio y la hora fin son obligatorias");
+        }
+
+        if (horaFin <= horaInicio)
+        {
+            throw new InvalidOperationException("La hora fin debe ser mayor que la hora inicio");
+        }
+    }
+
+    private static int ObtenerOrdenDia(string diaSemana)
+    {
+        string dia = (diaSemana ?? string.Empty)
+            .Trim()
+            .ToLowerInvariant()
+            .Replace("é", "e")
+            .Replace("á", "a");
+
+        return dia switch
+        {
+            "lunes" => 1,
+            "martes" => 2,
+            "miercoles" => 3,
+            "jueves" => 4,
+            "viernes" => 5,
+            "sabado" => 6,
+            "domingo" => 7,
+            _ => 99
+        };
+    }
 }
+

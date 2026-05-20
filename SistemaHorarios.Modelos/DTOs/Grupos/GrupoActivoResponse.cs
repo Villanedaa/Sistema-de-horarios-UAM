@@ -8,4 +8,10 @@ public class GrupoActivoResponse
     public string Codigo { get; set; } = string.Empty;
 
     public string Nombre { get; set; } = string.Empty;
+
+    public int NumeroSemestre { get; set; }
+
+    public int IdPlanAcademico { get; set; }
+
+    public string Jornada { get; set; } = string.Empty;
 }

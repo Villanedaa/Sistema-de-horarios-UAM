@@ -34,10 +34,7 @@ public static class ExtensionesServicios
 
         services.AddDbContext<SistemaHorariosDbContext>(
             options =>
-                options.UseMySql(
-                    connectionString,
-                    ServerVersion.AutoDetect(connectionString)
-                )
+                options.UseSqlite(connectionString)
         );
 
         return services;
