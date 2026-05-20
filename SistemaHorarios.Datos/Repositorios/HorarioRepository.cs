@@ -312,6 +312,7 @@ public class HorarioRepository
     }
 
     // Obtiene las materias activas del semestre al que pertenece el grupo.
+    // Si no hay SemestrePlan configurado, busca por el nombre de materia del grupo.
     public async Task<List<Materia>> ObtenerMateriasDelGrupoAsync(int idGrupo)
     {
         var grupo = await contexto.Grupos
@@ -322,16 +323,37 @@ public class HorarioRepository
             .FirstOrDefaultAsync(s =>
                 s.IdPlanAcademico == grupo.IdPlanAcademico &&
                 s.NumeroSemestre == grupo.NumeroSemestre);
-        if (semestrePlan == null) return new List<Materia>();
 
-        return await contexto.MateriasPlan
-            .Include(mp => mp.Materia)
-            .Where(mp =>
-                mp.IdSemestrePlan == semestrePlan.IdSemestrePlan &&
-                mp.Materia != null &&
-                mp.Materia.Activa)
-            .Select(mp => mp.Materia!)
-            .ToListAsync();
+        if (semestrePlan != null)
+        {
+            var materiasPlan = await contexto.MateriasPlan
+                .Include(mp => mp.Materia)
+                .Where(mp =>
+                    mp.IdSemestrePlan == semestrePlan.IdSemestrePlan &&
+                    mp.Materia != null &&
+                    mp.Materia.Activa)
+                .Select(mp => mp.Materia!)
+                .ToListAsync();
+
+            if (materiasPlan.Count > 0)
+                return materiasPlan;
+        }
+
+        // Fallback: buscar por el campo Materia del grupo (nombre o código)
+        if (!string.IsNullOrWhiteSpace(grupo.Materia))
+        {
+            string nombreBuscar = grupo.Materia.Trim().ToLower();
+            var materiasPorNombre = await contexto.Materias
+                .Where(m => m.Activa &&
+                    (m.Nombre.ToLower() == nombreBuscar ||
+                     m.Codigo.ToLower() == nombreBuscar))
+                .ToListAsync();
+
+            if (materiasPorNombre.Count > 0)
+                return materiasPorNombre;
+        }
+
+        return new List<Materia>();
     }
 
     // Obtiene los docentes activos asignados a una materia.

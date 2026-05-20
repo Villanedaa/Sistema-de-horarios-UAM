@@ -16,4 +16,6 @@ public class ActualizarPerfilDto
     [Required]
     [EmailAddress]
     public string CorreoInstitucional { get; set; } = string.Empty;
+
+    public string Celular { get; set; } = string.Empty;
 }
