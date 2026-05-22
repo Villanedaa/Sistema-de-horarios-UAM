@@ -32,6 +32,15 @@ public static class ExtensionesServicios
         var connectionString =
             configuration.GetConnectionString("DefaultConnection");
 
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "La cadena de conexión 'DefaultConnection' no está configurada. " +
+                "Configúrala en appsettings.Development.json o mediante la variable " +
+                "ConnectionStrings__DefaultConnection."
+            );
+        }
+
         services.AddDbContext<SistemaHorariosDbContext>(
             options =>
                 options.UseMySql(
