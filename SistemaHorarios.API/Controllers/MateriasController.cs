@@ -2,6 +2,7 @@
 using SistemaHorarios.API.DTOs.Materias;
 using SistemaHorarios.Logica.Negocio.Materias;
 using SistemaHorarios.Modelos.Entidades;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers
 {
@@ -23,7 +24,7 @@ namespace SistemaHorarios.API.Controllers
 
         // Lista todas las materias registradas.
         [HttpGet]
-        public async Task<ActionResult<List<MateriaResumenResponse>>> ObtenerMaterias()
+        public async Task<ActionResult<ApiResponse<List<MateriaResumenResponse>>>> ObtenerMaterias()
         {
             List<Materia> materias = await gestorMateria.ListarMateriasAsync();
 
@@ -31,12 +32,17 @@ namespace SistemaHorarios.API.Controllers
                 .Select(MapearMateriaResumen)
                 .ToList();
 
-            return Ok(respuesta);
+            return Ok(new ApiResponse<List<MateriaResumenResponse>>
+            {
+                Success = true,
+                Message = "Materias consultadas correctamente.",
+                Data = respuesta
+            });
         }
 
         // Lista únicamente las materias activas.
         [HttpGet("activas")]
-        public async Task<ActionResult<List<MateriaActivaResponse>>> ObtenerMateriasActivas()
+        public async Task<ActionResult<ApiResponse<List<MateriaActivaResponse>>>> ObtenerMateriasActivas()
         {
             List<Materia> materias = await gestorMateria.ListarMateriasActivasAsync();
 
@@ -44,26 +50,42 @@ namespace SistemaHorarios.API.Controllers
                 .Select(MapearMateriaActiva)
                 .ToList();
 
-            return Ok(respuesta);
+            return Ok(new ApiResponse<List<MateriaActivaResponse>>
+            {
+                Success = true,
+                Message = "Materias activas consultadas correctamente.",
+                Data = respuesta
+            });
         }
 
         // Consulta una materia por su identificador.
         [HttpGet("{id}")]
-        public async Task<ActionResult<MateriaResponse>> ObtenerMateriaPorId(int id)
+        public async Task<ActionResult<ApiResponse<MateriaResponse>>> ObtenerMateriaPorId(int id)
         {
             Materia? materia = await gestorMateria.ConsultarMateriaPorIdAsync(id);
 
             if (materia == null)
             {
-                return NotFound("La materia no existe.");
+                return NotFound(new ApiResponse<MateriaResponse>
+                {
+                    Success = false,
+                    Message = "La materia no existe.",
+                    Data = null
+                });
             }
 
-            return Ok(MapearMateriaResponse(materia));
+            return Ok(new ApiResponse<MateriaResponse>
+            {
+                Success = true,
+                Message = "Materia consultada correctamente.",
+                Data = MapearMateriaResponse(materia)
+            });
         }
 
         // Crea una nueva materia.
         [HttpPost]
-        public async Task<IActionResult> CrearMateria([FromBody] CrearMateriaRequest request)
+        public async Task<ActionResult<ApiResponse<MateriaResponse>>> CrearMateria(
+            [FromBody] CrearMateriaRequest request)
         {
             Materia materia = new Materia
             {
@@ -79,19 +101,29 @@ namespace SistemaHorarios.API.Controllers
 
             if (errores.Count > 0)
             {
-                return BadRequest(errores);
+                return BadRequest(new ApiResponse<List<string>>
+                {
+                    Success = false,
+                    Message = "No se pudo crear la materia.",
+                    Data = errores
+                });
             }
 
-            return Ok(new
-            {
-                Mensaje = "Materia creada correctamente.",
-                Materia = MapearMateriaResponse(materia)
-            });
+            return CreatedAtAction(
+                nameof(ObtenerMateriaPorId),
+                new { id = materia.IdMateria },
+                new ApiResponse<MateriaResponse>
+                {
+                    Success = true,
+                    Message = "Materia creada correctamente.",
+                    Data = MapearMateriaResponse(materia)
+                }
+            );
         }
 
         // Actualiza una materia existente.
         [HttpPut("{id}")]
-        public async Task<IActionResult> ActualizarMateria(
+        public async Task<ActionResult<ApiResponse<MateriaResponse>>> ActualizarMateria(
             int id,
             [FromBody] ActualizarMateriaRequest request)
         {
@@ -110,50 +142,73 @@ namespace SistemaHorarios.API.Controllers
 
             if (errores.Count > 0)
             {
-                return BadRequest(errores);
+                return BadRequest(new ApiResponse<List<string>>
+                {
+                    Success = false,
+                    Message = "No se pudo actualizar la materia.",
+                    Data = errores
+                });
             }
 
             Materia? materiaActualizada = await gestorMateria.ConsultarMateriaPorIdAsync(id);
 
             if (materiaActualizada == null)
             {
-                return NotFound("La materia no existe.");
+                return NotFound(new ApiResponse<MateriaResponse>
+                {
+                    Success = false,
+                    Message = "La materia no existe.",
+                    Data = null
+                });
             }
 
-            return Ok(new
+            return Ok(new ApiResponse<MateriaResponse>
             {
-                Mensaje = "Materia actualizada correctamente.",
-                Materia = MapearMateriaResponse(materiaActualizada)
+                Success = true,
+                Message = "Materia actualizada correctamente.",
+                Data = MapearMateriaResponse(materiaActualizada)
             });
         }
 
         // Desactiva una materia sin eliminarla físicamente.
         [HttpDelete("{id}")]
-        public async Task<IActionResult> EliminarMateria(int id)
+        public async Task<ActionResult<ApiResponse<int>>> EliminarMateria(int id)
         {
             List<string> errores = await gestorMateria.DesactivarMateriaAsync(id);
 
             if (errores.Count > 0)
             {
-                return BadRequest(errores);
+                return BadRequest(new ApiResponse<List<string>>
+                {
+                    Success = false,
+                    Message = "No se pudo inactivar la materia.",
+                    Data = errores
+                });
             }
 
-            return Ok(new
+            return Ok(new ApiResponse<int>
             {
-                IdMateria = id,
-                Mensaje = "Materia inactivada correctamente."
+                Success = true,
+                Message = "Materia inactivada correctamente.",
+                Data = id
             });
         }
 
         // Lista los prerrequisitos activos asociados a una materia.
         [HttpGet("{id}/prerrequisitos")]
-        public async Task<ActionResult<List<PrerrequisitoMateriaResponse>>> ObtenerPrerrequisitosDeMateria(int id)
+        public async Task<ActionResult<ApiResponse<List<PrerrequisitoMateriaResponse>>>> ObtenerPrerrequisitosDeMateria(
+            int id)
         {
             Materia? materia = await gestorMateria.ConsultarMateriaPorIdAsync(id);
 
             if (materia == null)
             {
-                return NotFound("La materia no existe.");
+                return NotFound(new ApiResponse<List<PrerrequisitoMateriaResponse>>
+                {
+                    Success = false,
+                    Message = "La materia no existe.",
+                    Data = null
+                });
             }
 
             List<Prerrequisito> prerrequisitos =
@@ -169,7 +224,12 @@ namespace SistemaHorarios.API.Controllers
                 respuesta.Add(item);
             }
 
-            return Ok(respuesta);
+            return Ok(new ApiResponse<List<PrerrequisitoMateriaResponse>>
+            {
+                Success = true,
+                Message = "Prerrequisitos de la materia consultados correctamente.",
+                Data = respuesta
+            });
         }
 
         // Convierte una entidad Materia en respuesta completa.
