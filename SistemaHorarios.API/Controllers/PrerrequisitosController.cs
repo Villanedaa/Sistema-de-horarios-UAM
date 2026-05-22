@@ -3,7 +3,7 @@ using SistemaHorarios.API.DTOs.Materias;
 using SistemaHorarios.Logica.Negocio.Materias;
 using SistemaHorarios.Modelos.DTOs.Materias;
 using SistemaHorarios.Modelos.Entidades;
-
+using SistemaHorarios.Modelos.Responses;
 namespace SistemaHorarios.API.Controllers
 {
     [ApiController]
@@ -24,7 +24,7 @@ namespace SistemaHorarios.API.Controllers
 
         // Lista todos los prerrequisitos registrados.
         [HttpGet]
-        public async Task<ActionResult<List<PrerrequisitoMateriaResponse>>> ObtenerPrerrequisitos()
+        public async Task<ActionResult<ApiResponse<List<PrerrequisitoMateriaResponse>>>> ObtenerPrerrequisitos()
         {
             List<Prerrequisito> prerrequisitos =
                 await gestorPrerrequisito.ListarPrerrequisitosAsync();
@@ -40,19 +40,29 @@ namespace SistemaHorarios.API.Controllers
                 respuesta.Add(item);
             }
 
-            return Ok(respuesta);
+            return Ok(new ApiResponse<List<PrerrequisitoMateriaResponse>>
+            {
+                Success = true,
+                Message = "Prerrequisitos consultados correctamente.",
+                Data = respuesta
+            });
         }
 
         // Lista los prerrequisitos activos de una materia específica.
         [HttpGet("materia/{idMateria}")]
-        public async Task<ActionResult<List<PrerrequisitoMateriaResponse>>> ObtenerPrerrequisitosPorMateria(
+        public async Task<ActionResult<ApiResponse<List<PrerrequisitoMateriaResponse>>>> ObtenerPrerrequisitosPorMateria(
             int idMateria)
         {
             Materia? materia = await gestorMateria.ConsultarMateriaPorIdAsync(idMateria);
 
             if (materia == null)
             {
-                return NotFound("La materia no existe.");
+                return NotFound(new ApiResponse<List<PrerrequisitoMateriaResponse>>
+                {
+                    Success = false,
+                    Message = "La materia no existe.",
+                    Data = null
+                });
             }
 
             List<Prerrequisito> prerrequisitos =
@@ -69,12 +79,17 @@ namespace SistemaHorarios.API.Controllers
                 respuesta.Add(item);
             }
 
-            return Ok(respuesta);
+            return Ok(new ApiResponse<List<PrerrequisitoMateriaResponse>>
+            {
+                Success = true,
+                Message = "Prerrequisitos de la materia consultados correctamente.",
+                Data = respuesta
+            });
         }
 
         // Asigna un prerrequisito a una materia.
         [HttpPost]
-        public async Task<IActionResult> CrearPrerrequisito(
+        public async Task<ActionResult<ApiResponse<PrerrequisitoMateriaResponse>>> CrearPrerrequisito(
             [FromBody] CrearPrerrequisitoRequest request)
         {
             Prerrequisito prerrequisito = new Prerrequisito
@@ -88,35 +103,47 @@ namespace SistemaHorarios.API.Controllers
 
             if (errores.Count > 0)
             {
-                return BadRequest(errores);
+                return BadRequest(new ApiResponse<List<string>>
+                {
+                    Success = false,
+                    Message = "No se pudo asignar el prerrequisito.",
+                    Data = errores
+                });
             }
 
             PrerrequisitoMateriaResponse respuesta =
                 await MapearPrerrequisitoMateriaResponseAsync(prerrequisito);
 
-            return Ok(new
+            return Ok(new ApiResponse<PrerrequisitoMateriaResponse>
             {
-                Mensaje = "Prerrequisito asignado correctamente.",
-                Prerrequisito = respuesta
+                Success = true,
+                Message = "Prerrequisito asignado correctamente.",
+                Data = respuesta
             });
         }
 
         // Desactiva un prerrequisito sin eliminarlo físicamente.
         [HttpDelete("{id}")]
-        public async Task<IActionResult> EliminarPrerrequisito(int id)
+        public async Task<ActionResult<ApiResponse<int>>> EliminarPrerrequisito(int id)
         {
             List<string> errores =
                 await gestorPrerrequisito.DesactivarPrerrequisitoAsync(id);
 
             if (errores.Count > 0)
             {
-                return BadRequest(errores);
+                return BadRequest(new ApiResponse<List<string>>
+                {
+                    Success = false,
+                    Message = "No se pudo desactivar el prerrequisito.",
+                    Data = errores
+                });
             }
 
-            return Ok(new
+            return Ok(new ApiResponse<int>
             {
-                IdPrerrequisito = id,
-                Mensaje = "Prerrequisito desactivado correctamente."
+                Success = true,
+                Message = "Prerrequisito desactivado correctamente.",
+                Data = id
             });
         }
 

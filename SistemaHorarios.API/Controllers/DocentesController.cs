@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-
 using SistemaHorarios.Logica.Negocio.Docentes;
-
 using SistemaHorarios.Modelos.DTOs.Docentes;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -11,17 +10,13 @@ namespace SistemaHorarios.API.Controllers;
 public class DocentesController : ControllerBase
 {
     private readonly IGestorDocente _gestor;
-
-    private readonly IGestorDisponibilidadDocente
-        _gestorDisponibilidad;
+    private readonly IGestorDisponibilidadDocente _gestorDisponibilidad;
 
     public DocentesController(
         IGestorDocente gestor,
-
         IGestorDisponibilidadDocente gestorDisponibilidad)
     {
         _gestor = gestor;
-
         _gestorDisponibilidad = gestorDisponibilidad;
     }
 
@@ -34,7 +29,12 @@ public class DocentesController : ControllerBase
     {
         var docentes = await _gestor.ObtenerTodosAsync();
 
-        return Ok(docentes);
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Docentes consultados correctamente.",
+            Data = docentes
+        });
     }
 
     [HttpGet("{id}")]
@@ -43,33 +43,53 @@ public class DocentesController : ControllerBase
         var docente = await _gestor.ObtenerPorIdAsync(id);
 
         if (docente == null)
-            return NotFound();
+        {
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "El docente no existe.",
+                Data = null
+            });
+        }
 
-        return Ok(docente);
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Docente consultado correctamente.",
+            Data = docente
+        });
     }
 
     [HttpPost]
-    public async Task<IActionResult> Crear(
-        DocenteRequest request)
+    public async Task<IActionResult> Crear(DocenteRequest request)
     {
         var docente = await _gestor.CrearAsync(request);
 
         return CreatedAtAction(
             nameof(ObtenerPorId),
             new { id = docente.IdDocente },
-            docente
+            new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Docente creado correctamente.",
+                Data = docente
+            }
         );
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Actualizar(
         int id,
-
         DocenteRequest request)
     {
         await _gestor.ActualizarAsync(id, request);
 
-        return NoContent();
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Docente actualizado correctamente.",
+            Data = id
+        });
     }
 
     [HttpDelete("{id}")]
@@ -77,7 +97,12 @@ public class DocentesController : ControllerBase
     {
         await _gestor.EliminarAsync(id);
 
-        return NoContent();
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Docente eliminado correctamente.",
+            Data = id
+        });
     }
 
     // =====================================================
@@ -85,26 +110,31 @@ public class DocentesController : ControllerBase
     // =====================================================
 
     [HttpGet("{id}/disponibilidad")]
-    public async Task<IActionResult>
-        ObtenerDisponibilidad(int id)
+    public async Task<IActionResult> ObtenerDisponibilidad(int id)
     {
         var disponibilidad =
-            await _gestorDisponibilidad
-                .ObtenerDisponibilidadAsync(id);
+            await _gestorDisponibilidad.ObtenerDisponibilidadAsync(id);
 
-        return Ok(disponibilidad);
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Disponibilidad docente consultada correctamente.",
+            Data = disponibilidad
+        });
     }
 
     [HttpPut("{id}/disponibilidad")]
-    public async Task<IActionResult>
-        ActualizarDisponibilidad(
-            int id,
-
-            ActualizarDisponibilidadDocenteRequest request)
+    public async Task<IActionResult> ActualizarDisponibilidad(
+        int id,
+        ActualizarDisponibilidadDocenteRequest request)
     {
-        await _gestorDisponibilidad
-            .ActualizarDisponibilidadAsync(id, request);
+        await _gestorDisponibilidad.ActualizarDisponibilidadAsync(id, request);
 
-        return NoContent();
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Disponibilidad docente actualizada correctamente.",
+            Data = id
+        });
     }
 }

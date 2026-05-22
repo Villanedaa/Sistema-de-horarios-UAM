@@ -2,6 +2,7 @@
 using SistemaHorarios.Logica.Negocio.Grupos;
 using SistemaHorarios.Modelos.DTOs.Grupos;
 using SistemaHorarios.Modelos.Entidades;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -19,7 +20,7 @@ public class GruposController : ControllerBase
 
     // Lista todos los grupos registrados.
     [HttpGet]
-    public async Task<ActionResult<List<GrupoResumenResponse>>> ObtenerGrupos()
+    public async Task<ActionResult<ApiResponse<List<GrupoResumenResponse>>>> ObtenerGrupos()
     {
         List<Grupo> grupos = await gestorGrupo.ListarGruposAsync();
 
@@ -27,26 +28,42 @@ public class GruposController : ControllerBase
             .Select(MapearGrupoResumen)
             .ToList();
 
-        return Ok(respuesta);
+        return Ok(new ApiResponse<List<GrupoResumenResponse>>
+        {
+            Success = true,
+            Message = "Grupos consultados correctamente.",
+            Data = respuesta
+        });
     }
 
     // Consulta un grupo por su identificador.
     [HttpGet("{id}")]
-    public async Task<ActionResult<GrupoResponse>> ObtenerGrupoPorId(int id)
+    public async Task<ActionResult<ApiResponse<GrupoResponse>>> ObtenerGrupoPorId(int id)
     {
         Grupo? grupo = await gestorGrupo.ConsultarGrupoPorIdAsync(id);
 
         if (grupo == null)
         {
-            return NotFound("El grupo no existe.");
+            return NotFound(new ApiResponse<GrupoResponse>
+            {
+                Success = false,
+                Message = "El grupo no existe.",
+                Data = null
+            });
         }
 
-        return Ok(MapearGrupoResponse(grupo));
+        return Ok(new ApiResponse<GrupoResponse>
+        {
+            Success = true,
+            Message = "Grupo consultado correctamente.",
+            Data = MapearGrupoResponse(grupo)
+        });
     }
 
     // Crea un nuevo grupo académico.
     [HttpPost]
-    public async Task<IActionResult> CrearGrupo([FromBody] CrearGrupoRequest request)
+    public async Task<ActionResult<ApiResponse<GrupoResponse>>> CrearGrupo(
+        [FromBody] CrearGrupoRequest request)
     {
         Grupo grupo = new Grupo
         {
@@ -65,19 +82,29 @@ public class GruposController : ControllerBase
 
         if (errores.Count > 0)
         {
-            return BadRequest(errores);
+            return BadRequest(new ApiResponse<List<string>>
+            {
+                Success = false,
+                Message = "No se pudo crear el grupo.",
+                Data = errores
+            });
         }
 
-        return Ok(new
-        {
-            Mensaje = "Grupo creado correctamente.",
-            Grupo = MapearGrupoResponse(grupo)
-        });
+        return CreatedAtAction(
+            nameof(ObtenerGrupoPorId),
+            new { id = grupo.IdGrupo },
+            new ApiResponse<GrupoResponse>
+            {
+                Success = true,
+                Message = "Grupo creado correctamente.",
+                Data = MapearGrupoResponse(grupo)
+            }
+        );
     }
 
     // Actualiza un grupo académico existente.
     [HttpPut("{id}")]
-    public async Task<IActionResult> ActualizarGrupo(
+    public async Task<ActionResult<ApiResponse<GrupoResponse>>> ActualizarGrupo(
         int id,
         [FromBody] ActualizarGrupoRequest request)
     {
@@ -99,50 +126,72 @@ public class GruposController : ControllerBase
 
         if (errores.Count > 0)
         {
-            return BadRequest(errores);
+            return BadRequest(new ApiResponse<List<string>>
+            {
+                Success = false,
+                Message = "No se pudo actualizar el grupo.",
+                Data = errores
+            });
         }
 
         Grupo? grupoActualizado = await gestorGrupo.ConsultarGrupoPorIdAsync(id);
 
         if (grupoActualizado == null)
         {
-            return NotFound("El grupo no existe.");
+            return NotFound(new ApiResponse<GrupoResponse>
+            {
+                Success = false,
+                Message = "El grupo no existe.",
+                Data = null
+            });
         }
 
-        return Ok(new
+        return Ok(new ApiResponse<GrupoResponse>
         {
-            Mensaje = "Grupo actualizado correctamente.",
-            Grupo = MapearGrupoResponse(grupoActualizado)
+            Success = true,
+            Message = "Grupo actualizado correctamente.",
+            Data = MapearGrupoResponse(grupoActualizado)
         });
     }
 
     // Inactiva un grupo sin eliminarlo físicamente.
     [HttpDelete("{id}")]
-    public async Task<IActionResult> EliminarGrupo(int id)
+    public async Task<ActionResult<ApiResponse<int>>> EliminarGrupo(int id)
     {
         List<string> errores = await gestorGrupo.DesactivarGrupoAsync(id);
 
         if (errores.Count > 0)
         {
-            return BadRequest(errores);
+            return BadRequest(new ApiResponse<List<string>>
+            {
+                Success = false,
+                Message = "No se pudo inactivar el grupo.",
+                Data = errores
+            });
         }
 
-        return Ok(new
+        return Ok(new ApiResponse<int>
         {
-            IdGrupo = id,
-            Mensaje = "Grupo inactivado correctamente."
+            Success = true,
+            Message = "Grupo inactivado correctamente.",
+            Data = id
         });
     }
 
     // Consulta la cantidad de estudiantes asociada a un grupo.
     [HttpGet("{id}/cupos")]
-    public async Task<ActionResult<GrupoCuposResponse>> ObtenerCuposGrupo(int id)
+    public async Task<ActionResult<ApiResponse<GrupoCuposResponse>>> ObtenerCuposGrupo(int id)
     {
         Grupo? grupo = await gestorGrupo.ConsultarGrupoPorIdAsync(id);
 
         if (grupo == null)
         {
-            return NotFound("El grupo no existe.");
+            return NotFound(new ApiResponse<GrupoCuposResponse>
+            {
+                Success = false,
+                Message = "El grupo no existe.",
+                Data = null
+            });
         }
 
         GrupoCuposResponse respuesta = new GrupoCuposResponse
@@ -151,12 +200,17 @@ public class GruposController : ControllerBase
             CantidadEstudiantes = grupo.CantidadEstudiantes
         };
 
-        return Ok(respuesta);
+        return Ok(new ApiResponse<GrupoCuposResponse>
+        {
+            Success = true,
+            Message = "Cupos del grupo consultados correctamente.",
+            Data = respuesta
+        });
     }
 
     // Lista únicamente los grupos activos.
     [HttpGet("activos")]
-    public async Task<ActionResult<List<GrupoActivoResponse>>> ObtenerGruposActivos()
+    public async Task<ActionResult<ApiResponse<List<GrupoActivoResponse>>>> ObtenerGruposActivos()
     {
         List<Grupo> grupos = await gestorGrupo.ListarGruposActivosAsync();
 
@@ -164,12 +218,17 @@ public class GruposController : ControllerBase
             .Select(MapearGrupoActivo)
             .ToList();
 
-        return Ok(respuesta);
+        return Ok(new ApiResponse<List<GrupoActivoResponse>>
+        {
+            Success = true,
+            Message = "Grupos activos consultados correctamente.",
+            Data = respuesta
+        });
     }
 
     // Lista los grupos asociados a un plan académico.
     [HttpGet("plan/{idPlanAcademico}")]
-    public async Task<ActionResult<List<GrupoResumenResponse>>> ObtenerGruposPorPlanAcademico(
+    public async Task<ActionResult<ApiResponse<List<GrupoResumenResponse>>>> ObtenerGruposPorPlanAcademico(
         int idPlanAcademico)
     {
         List<Grupo> grupos =
@@ -179,12 +238,17 @@ public class GruposController : ControllerBase
             .Select(MapearGrupoResumen)
             .ToList();
 
-        return Ok(respuesta);
+        return Ok(new ApiResponse<List<GrupoResumenResponse>>
+        {
+            Success = true,
+            Message = "Grupos del plan académico consultados correctamente.",
+            Data = respuesta
+        });
     }
 
     // Lista los grupos asociados a un número de semestre.
     [HttpGet("semestre/{numeroSemestre}")]
-    public async Task<ActionResult<List<GrupoResumenResponse>>> ObtenerGruposPorSemestre(
+    public async Task<ActionResult<ApiResponse<List<GrupoResumenResponse>>>> ObtenerGruposPorSemestre(
         int numeroSemestre)
     {
         List<Grupo> grupos =
@@ -194,7 +258,12 @@ public class GruposController : ControllerBase
             .Select(MapearGrupoResumen)
             .ToList();
 
-        return Ok(respuesta);
+        return Ok(new ApiResponse<List<GrupoResumenResponse>>
+        {
+            Success = true,
+            Message = "Grupos del semestre consultados correctamente.",
+            Data = respuesta
+        });
     }
 
     // Convierte una entidad Grupo en respuesta completa.
