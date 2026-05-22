@@ -12,111 +12,94 @@ public class RolesController : ControllerBase
 {
     private readonly IRolService _rolService;
 
-    public RolesController(
-        IRolService rolService)
+    public RolesController(IRolService rolService)
     {
         _rolService = rolService;
     }
 
-    // Obtiene todos los roles
+    // Obtiene todos los roles.
     [HttpGet]
-    public async Task<IActionResult> ObtenerRoles()
+    public async Task<ActionResult<ApiResponse<List<RolResponseDto>>>> ObtenerRoles()
     {
-        var roles =
-            await _rolService.ObtenerRoles();
+        var roles = await _rolService.ObtenerRoles();
 
-        return Ok(
-            new ApiResponse<List<RolResponseDto>>
-            {
-                Success = true,
-
-                Message = "Roles obtenidos correctamente",
-
-                Data = roles
-            });
+        return Ok(new ApiResponse<List<RolResponseDto>>
+        {
+            Success = true,
+            Message = "Roles obtenidos correctamente.",
+            Data = roles
+        });
     }
 
-    // Obtiene un rol por Id
+    // Obtiene un rol por Id.
     [HttpGet("{id}")]
-    public async Task<IActionResult> ObtenerPorId(
-        int id)
+    public async Task<ActionResult<ApiResponse<RolResponseDto>>> ObtenerPorId(int id)
     {
-        var rol =
-            await _rolService
-                .ObtenerPorId(id);
+        var rol = await _rolService.ObtenerPorId(id);
 
         if (rol == null)
         {
-            return NotFound(
-                new ApiResponse<object>
-                {
-                    Success = false,
-
-                    Message = "Rol no encontrado"
-                });
+            return NotFound(new ApiResponse<RolResponseDto>
+            {
+                Success = false,
+                Message = "Rol no encontrado.",
+                Data = null
+            });
         }
 
-        return Ok(
-            new ApiResponse<RolResponseDto>
-            {
-                Success = true,
-
-                Message = "Rol obtenido correctamente",
-
-                Data = rol
-            });
+        return Ok(new ApiResponse<RolResponseDto>
+        {
+            Success = true,
+            Message = "Rol obtenido correctamente.",
+            Data = rol
+        });
     }
 
-    // Crea un nuevo rol
+    // Crea un nuevo rol.
     [Authorize(Policy = "SoloAdministradores")]
     [HttpPost]
-    public async Task<IActionResult> CrearRol(
-        CrearRolDto dto)
+    public async Task<ActionResult<ApiResponse<object>>> CrearRol(
+        [FromBody] CrearRolDto dto)
     {
         await _rolService.CrearRol(dto);
 
-        return Ok(
-            new ApiResponse<object>
-            {
-                Success = true,
-
-                Message = "Rol creado correctamente"
-            });
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Rol creado correctamente.",
+            Data = null
+        });
     }
 
-    // Actualiza un rol existente
+    // Actualiza un rol existente.
     [Authorize(Policy = "SoloAdministradores")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> ActualizarRol(
+    public async Task<ActionResult<ApiResponse<int>>> ActualizarRol(
         int id,
-        ActualizarRolDto dto)
+        [FromBody] ActualizarRolDto dto)
     {
-        await _rolService
-            .ActualizarRol(id, dto);
+        await _rolService.ActualizarRol(id, dto);
 
-        return Ok(
-            new ApiResponse<object>
-            {
-                Success = true,
-
-                Message = "Rol actualizado correctamente"
-            });
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Rol actualizado correctamente.",
+            Data = id
+        });
     }
 
-    // Elimina un rol
+    // Elimina un rol.
     [Authorize(Policy = "SoloAdministradores")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> EliminarRol(
-        int id)
+    public async Task<ActionResult<ApiResponse<int>>> EliminarRol(int id)
     {
         await _rolService.EliminarRol(id);
 
-        return Ok(
-            new ApiResponse<object>
-            {
-                Success = true,
-
-                Message = "Rol eliminado correctamente"
-            });
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Rol eliminado correctamente.",
+            Data = id
+        });
     }
 }
