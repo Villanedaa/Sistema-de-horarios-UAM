@@ -19,6 +19,8 @@ public class RolesController : ControllerBase
 
     // Obtiene todos los roles.
     [HttpGet]
+    [HttpGet]
+    [Authorize(Roles = "Administrador,Coordinador")]
     public async Task<ActionResult<ApiResponse<List<RolResponseDto>>>> ObtenerRoles()
     {
         var roles = await _rolService.ObtenerRoles();
@@ -33,6 +35,8 @@ public class RolesController : ControllerBase
 
     // Obtiene un rol por Id.
     [HttpGet("{id}")]
+    [HttpGet]
+    [Authorize(Roles = "Administrador,Coordinador")]
     public async Task<ActionResult<ApiResponse<RolResponseDto>>> ObtenerPorId(int id)
     {
         var rol = await _rolService.ObtenerPorId(id);
