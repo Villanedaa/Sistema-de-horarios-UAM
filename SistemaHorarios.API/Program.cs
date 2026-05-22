@@ -1,4 +1,4 @@
-using SistemaHorarios.API.Configuraciones;
+﻿using SistemaHorarios.API.Configuraciones;
 using SistemaHorarios.API.Extensions;
 using SistemaHorarios.API.Extensiones;
 
@@ -6,6 +6,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Controladores
 builder.Services.AddControllers();
+
+// Comportamiento global de validaciones
+builder.Services.ConfigurarComportamientoApi();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();

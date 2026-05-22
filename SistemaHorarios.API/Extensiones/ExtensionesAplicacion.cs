@@ -7,7 +7,11 @@ public static class ExtensionesAplicacion
     public static WebApplication ConfigurarPipeline(
         this WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
+        var swaggerHabilitado =
+            app.Environment.IsDevelopment() ||
+            app.Configuration.GetValue<bool>("Swagger:Enabled");
+
+        if (swaggerHabilitado)
         {
             app.UseSwagger();
 
