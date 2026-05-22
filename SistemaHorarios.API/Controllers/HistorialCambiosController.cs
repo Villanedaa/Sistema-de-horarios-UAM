@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Modelos.Responses;
 
@@ -5,6 +6,7 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/historial-cambios")]
+[Authorize(Roles = "Administrador")]
 public class HistorialCambiosController : ControllerBase
 {
     public record CambioItem(

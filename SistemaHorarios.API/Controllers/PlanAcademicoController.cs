@@ -7,7 +7,7 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Administrador")]
+[Authorize]
 public class PlanAcademicoController : ControllerBase
 {
     private readonly IPlanAcademicoService _planAcademicoService;
@@ -19,6 +19,7 @@ public class PlanAcademicoController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Administrador,Coordinador")]
     public async Task<ActionResult<List<PlanAcademicoResponseDto>>> ObtenerTodos()
     {
         var planes =
@@ -28,6 +29,7 @@ public class PlanAcademicoController : ControllerBase
     }
 
     [HttpGet("{idPlanAcademico}")]
+    [Authorize(Roles = "Administrador,Coordinador")]
     public async Task<ActionResult<PlanAcademicoResponseDto>> ObtenerPorId(
         int idPlanAcademico)
     {
