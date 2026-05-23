@@ -14,6 +14,8 @@ public interface IPlanAcademicoRepository
 
     Task<bool> EliminarAsync(PlanAcademico planAcademico);
 
+    Task<bool> ActivarAsync(PlanAcademico planAcademico);
+
     Task<SemestrePlan?> ObtenerSemestrePorIdAsync(int idSemestrePlan);
 
     Task<SemestrePlan?> ObtenerSemestrePorNumeroAsync(

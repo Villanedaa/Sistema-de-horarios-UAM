@@ -99,8 +99,8 @@ public class PlanAcademicoController : ControllerBase
     }
 
     [HttpDelete("{idPlanAcademico}")]
-    public async Task<ActionResult<ApiResponse<object>>> Eliminar(
-        int idPlanAcademico)
+    public async Task<ActionResult<ApiResponse<int>>> Eliminar(
+    int idPlanAcademico)
     {
         bool eliminado =
             await _planAcademicoService.EliminarAsync(idPlanAcademico);
@@ -114,10 +114,35 @@ public class PlanAcademicoController : ControllerBase
             });
         }
 
-        return Ok(new ApiResponse<object>
+        return Ok(new ApiResponse<int>
         {
             Success = true,
-            Message = "Plan académico eliminado correctamente."
+            Message = "Plan académico inactivado correctamente.",
+            Data = idPlanAcademico
+        });
+    }
+
+    [HttpPatch("{idPlanAcademico}/activar")]
+    public async Task<ActionResult<ApiResponse<int>>> Activar(
+    int idPlanAcademico)
+    {
+        bool activado =
+            await _planAcademicoService.ActivarAsync(idPlanAcademico);
+
+        if (!activado)
+        {
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Plan académico no encontrado."
+            });
+        }
+
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Plan académico activado correctamente.",
+            Data = idPlanAcademico
         });
     }
 
