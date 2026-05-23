@@ -6,6 +6,7 @@ public static class ExtensionesAplicacion
 {
     public static WebApplication ConfigurarPipeline(
         this WebApplication app)
+
     {
         var swaggerHabilitado =
             app.Environment.IsDevelopment() ||
@@ -24,6 +25,8 @@ public static class ExtensionesAplicacion
 
         app.UseMiddleware<ExceptionMiddleware>();
 
+        app.UseStaticFiles();
+
         app.UseCors("PermitirFrontend");
 
         app.UseAuthentication();
@@ -31,6 +34,8 @@ public static class ExtensionesAplicacion
         app.UseAuthorization();
 
         app.MapControllers();
+
+        
 
         return app;
     }

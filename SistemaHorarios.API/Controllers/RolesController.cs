@@ -19,7 +19,6 @@ public class RolesController : ControllerBase
 
     // Obtiene todos los roles.
     [HttpGet]
-    [HttpGet]
     [Authorize(Roles = "Administrador,Coordinador")]
     public async Task<ActionResult<ApiResponse<List<RolResponseDto>>>> ObtenerRoles()
     {
@@ -35,7 +34,6 @@ public class RolesController : ControllerBase
 
     // Obtiene un rol por Id.
     [HttpGet("{id}")]
-    [HttpGet]
     [Authorize(Roles = "Administrador,Coordinador")]
     public async Task<ActionResult<ApiResponse<RolResponseDto>>> ObtenerPorId(int id)
     {

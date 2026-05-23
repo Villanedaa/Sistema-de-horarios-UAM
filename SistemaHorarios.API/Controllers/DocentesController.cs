@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Docentes;
 using SistemaHorarios.Modelos.DTOs.Docentes;
 using SistemaHorarios.Modelos.Responses;
@@ -7,6 +8,7 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class DocentesController : ControllerBase
 {
     private readonly IGestorDocente _gestor;

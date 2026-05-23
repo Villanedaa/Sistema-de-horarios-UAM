@@ -8,7 +8,7 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class DashboardController : ControllerBase
 {
     private readonly IDashboardService _dashboardService;
