@@ -97,12 +97,26 @@ public class DocentesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Eliminar(int id)
     {
-        await _gestor.EliminarAsync(id);
+    	await _gestor.EliminarAsync(id);
 
-        return Ok(new ApiResponse<int>
+    	return Ok(new ApiResponse<int>
+    	{
+            Success = true,
+            Message = "Docente inactivado correctamente.",
+            Data = id
+        });
+    }
+
+
+    [HttpPatch("{id}/activar")]
+    public async Task<IActionResult> Activar(int id)
+    {
+    	await _gestor.ActivarAsync(id);
+
+    	return Ok(new ApiResponse<int>
         {
             Success = true,
-            Message = "Docente eliminado correctamente.",
+            Message = "Docente activado correctamente.",
             Data = id
         });
     }

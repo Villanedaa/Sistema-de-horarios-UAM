@@ -109,4 +109,17 @@ public class GestorDocente : IGestorDocente
 
         await _repository.EliminarAsync(docente);
     }
+
+
+    public async Task ActivarAsync(int id)
+    {
+    	var docente = await _repository.ObtenerPorIdAsync(id);
+
+    	if (docente == null)
+    	{
+        throw new NotFoundException("Docente no encontrado");
+    	}
+
+    	await _repository.ActivarAsync(docente);
+    }
 }
