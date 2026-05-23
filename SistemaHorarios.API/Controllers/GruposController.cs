@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Grupos;
 using SistemaHorarios.Modelos.DTOs.Grupos;
 using SistemaHorarios.Modelos.Entidades;
@@ -8,6 +9,7 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/grupos")]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class GruposController : ControllerBase
 {
     private readonly GestorGrupo gestorGrupo;

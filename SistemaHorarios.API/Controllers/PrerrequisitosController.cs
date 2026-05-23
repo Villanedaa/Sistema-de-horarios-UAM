@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.API.DTOs.Materias;
 using SistemaHorarios.Logica.Negocio.Materias;
 using SistemaHorarios.Modelos.DTOs.Materias;
@@ -8,6 +9,7 @@ namespace SistemaHorarios.API.Controllers
 {
     [ApiController]
     [Route("api/prerrequisitos")]
+    [Authorize(Roles = "Administrador,Coordinador")]
     public class PrerrequisitosController : ControllerBase
     {
         private readonly GestorPrerrequisito gestorPrerrequisito;

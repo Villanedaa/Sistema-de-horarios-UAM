@@ -22,4 +22,6 @@ public interface IUsuarioService
     Task<bool> CambiarContrasenaAsync(int idUsuario, CambiarContrasenaDto dto);
 
     Task<VerificarUsuarioResponseDto> VerificarUsuarioAsync(VerificarUsuarioDto dto);
+
+    Task<bool> ActualizarFotoPerfilAsync(int idUsuario, string fotoPerfilUrl);
 }
