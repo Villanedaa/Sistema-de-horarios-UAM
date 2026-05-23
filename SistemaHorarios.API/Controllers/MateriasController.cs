@@ -196,6 +196,32 @@ namespace SistemaHorarios.API.Controllers
             });
         }
 
+
+
+        // Reactiva una materia previamente inactiva.
+        [HttpPatch("{id}/activar")]
+        public async Task<ActionResult<ApiResponse<int>>> ActivarMateria(int id)
+        {
+            List<string> errores = await gestorMateria.ActivarMateriaAsync(id);
+
+            if (errores.Count > 0)
+            {
+                return BadRequest(new ApiResponse<List<string>>
+                {
+                    Success = false,
+                    Message = "No se pudo activar la materia.",
+                    Data = errores
+                });
+            }
+
+            return Ok(new ApiResponse<int>
+            {
+                Success = true,
+                Message = "Materia activada correctamente.",
+                Data = id
+            });
+        }
+
         // Lista los prerrequisitos activos asociados a una materia.
         [HttpGet("{id}/prerrequisitos")]
         public async Task<ActionResult<ApiResponse<List<PrerrequisitoMateriaResponse>>>> ObtenerPrerrequisitosDeMateria(

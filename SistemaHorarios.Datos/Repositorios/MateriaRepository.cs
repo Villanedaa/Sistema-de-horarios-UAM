@@ -110,5 +110,22 @@ namespace SistemaHorarios.Datos.Repositorios
 
             return true;
         }
+
+        // Reactiva una materia previamente inactiva.
+        public async Task<bool> ActivarMateriaAsync(int idMateria)
+        {
+            Materia? materia = await ObtenerMateriaPorIdAsync(idMateria);
+
+            if (materia == null)
+            {
+                return false;
+            }
+
+            materia.Activa = true;
+
+            await contexto.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
