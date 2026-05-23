@@ -90,7 +90,19 @@ public class PlanAcademicoService : IPlanAcademicoService
 
         return await _repository.EliminarAsync(plan);
     }
+    public async Task<bool> ActivarAsync(
+    int idPlanAcademico)
+    {
+        var plan =
+            await _repository.ObtenerPorIdAsync(idPlanAcademico);
 
+        if (plan == null)
+        {
+            return false;
+        }
+
+        return await _repository.ActivarAsync(plan);
+    }
     public async Task<SemestrePlanResponseDto> AgregarSemestreAsync(
         int idPlanAcademico,
         CrearSemestrePlanDto dto)

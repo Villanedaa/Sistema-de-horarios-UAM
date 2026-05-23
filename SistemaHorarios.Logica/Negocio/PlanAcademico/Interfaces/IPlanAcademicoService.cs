@@ -19,6 +19,9 @@ public interface IPlanAcademicoService
     Task<bool> EliminarAsync(
         int idPlanAcademico);
 
+    Task<bool> ActivarAsync(
+        int idPlanAcademico);
+
     Task<SemestrePlanResponseDto> AgregarSemestreAsync(
         int idPlanAcademico,
         CrearSemestrePlanDto dto);

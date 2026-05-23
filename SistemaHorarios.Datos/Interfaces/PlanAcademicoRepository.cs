@@ -55,9 +55,24 @@ public class PlanAcademicoRepository : IPlanAcademicoRepository
     }
 
     public async Task<bool> EliminarAsync(
+    PlanAcademico planAcademico)
+    {
+        planAcademico.Estado = "Inactivo";
+
+        _context.PlanesAcademicos.Update(planAcademico);
+
+        int filasAfectadas =
+            await _context.SaveChangesAsync();
+
+        return filasAfectadas > 0;
+    }
+
+    public async Task<bool> ActivarAsync(
         PlanAcademico planAcademico)
     {
-        _context.PlanesAcademicos.Remove(planAcademico);
+        planAcademico.Estado = "Activo";
+
+        _context.PlanesAcademicos.Update(planAcademico);
 
         int filasAfectadas =
             await _context.SaveChangesAsync();
