@@ -46,14 +46,27 @@ public class DocenteRepository : IDocenteRepository
 
         await _context.SaveChangesAsync();
     }
+	
 
     public async Task EliminarAsync(Docente docente)
     {
-        _context.Docentes.Remove(docente);
+    	docente.Activo = false;
 
-        await _context.SaveChangesAsync();
+    	_context.Docentes.Update(docente);
+
+    	await _context.SaveChangesAsync();
     }
 
+    public async Task ActivarAsync(Docente docente)
+    {
+    	docente.Activo = true;
+
+    	_context.Docentes.Update(docente);
+
+    	await _context.SaveChangesAsync();
+    }
+    
+    
     public async Task<bool> ExistePorIdAsync(int id)
     {
         return await _context.Docentes
