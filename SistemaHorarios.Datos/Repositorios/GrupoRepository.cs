@@ -90,13 +90,15 @@ public class GrupoRepository
         }
 
         grupoActual.Codigo = grupoModificado.Codigo;
-        grupoActual.Nombre = grupoModificado.Nombre;
-        grupoActual.Jornada = grupoModificado.Jornada;
-        grupoActual.TipoGrupo = grupoModificado.TipoGrupo;
-        grupoActual.NumeroSemestre = grupoModificado.NumeroSemestre;
-        grupoActual.CantidadEstudiantes = grupoModificado.CantidadEstudiantes;
-        grupoActual.IdPlanAcademico = grupoModificado.IdPlanAcademico;
-        grupoActual.Activo = grupoModificado.Activo;
+	grupoActual.Nombre = grupoModificado.Nombre;
+	grupoActual.Jornada = grupoModificado.Jornada;
+	grupoActual.TipoGrupo = grupoModificado.TipoGrupo;
+	grupoActual.NumeroSemestre = grupoModificado.NumeroSemestre;
+	grupoActual.CantidadEstudiantes = grupoModificado.CantidadEstudiantes;
+	grupoActual.IdPlanAcademico = grupoModificado.IdPlanAcademico;
+	grupoActual.Materia = grupoModificado.Materia;
+	grupoActual.Dias = grupoModificado.Dias;
+	grupoActual.Activo = grupoModificado.Activo;
 
         await contexto.SaveChangesAsync();
 
@@ -119,4 +121,21 @@ public class GrupoRepository
 
         return true;
     }
+
+// Activa nuevamente un grupo académico.
+public async Task<bool> ActivarGrupoAsync(int idGrupo)
+{
+    Grupo? grupo = await ObtenerGrupoPorIdAsync(idGrupo);
+
+    if (grupo == null)
+    {
+        return false;
+    }
+
+    grupo.Activo = true;
+
+    await contexto.SaveChangesAsync();
+
+    return true;
+}
 }
