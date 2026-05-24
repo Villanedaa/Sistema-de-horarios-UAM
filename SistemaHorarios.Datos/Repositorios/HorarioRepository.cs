@@ -313,49 +313,37 @@ public class HorarioRepository
 
     // Obtiene las materias activas del semestre al que pertenece el grupo.
     // Si no hay SemestrePlan configurado, busca por el nombre de materia del grupo.
+
+    // Obtiene las materias activas del semestre al que pertenece el grupo.
     public async Task<List<Materia>> ObtenerMateriasDelGrupoAsync(int idGrupo)
     {
-        var grupo = await contexto.Grupos
+        Grupo? grupo = await contexto.Grupos
             .FirstOrDefaultAsync(g => g.IdGrupo == idGrupo && g.Activo);
-        if (grupo == null) return new List<Materia>();
 
-        var semestrePlan = await contexto.SemestresPlan
+        if (grupo == null)
+        {
+            return new List<Materia>();
+        }
+
+        SemestrePlan? semestrePlan = await contexto.SemestresPlan
             .FirstOrDefaultAsync(s =>
                 s.IdPlanAcademico == grupo.IdPlanAcademico &&
                 s.NumeroSemestre == grupo.NumeroSemestre);
 
-        if (semestrePlan != null)
+        if (semestrePlan == null)
         {
-            var materiasPlan = await contexto.MateriasPlan
-                .Include(mp => mp.Materia)
-                .Where(mp =>
-                    mp.IdSemestrePlan == semestrePlan.IdSemestrePlan &&
-                    mp.Materia != null &&
-                    mp.Materia.Activa)
-                .Select(mp => mp.Materia!)
-                .ToListAsync();
-
-            if (materiasPlan.Count > 0)
-                return materiasPlan;
+            return new List<Materia>();
         }
 
-        // Fallback: buscar por el campo Materia del grupo (nombre o código)
-        if (!string.IsNullOrWhiteSpace(grupo.Materia))
-        {
-            string nombreBuscar = grupo.Materia.Trim().ToLower();
-            var materiasPorNombre = await contexto.Materias
-                .Where(m => m.Activa &&
-                    (m.Nombre.ToLower() == nombreBuscar ||
-                     m.Codigo.ToLower() == nombreBuscar))
-                .ToListAsync();
-
-            if (materiasPorNombre.Count > 0)
-                return materiasPorNombre;
-        }
-
-        return new List<Materia>();
+        return await contexto.MateriasPlan
+            .Include(mp => mp.Materia)
+            .Where(mp =>
+                mp.IdSemestrePlan == semestrePlan.IdSemestrePlan &&
+                mp.Materia != null &&
+                mp.Materia.Activa)
+            .Select(mp => mp.Materia!)
+            .ToListAsync();
     }
-
     // Obtiene los docentes activos asignados a una materia.
     public async Task<List<Docente>> ObtenerDocentesPorMateriaAsync(int idMateria)
     {

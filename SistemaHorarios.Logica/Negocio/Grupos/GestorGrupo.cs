@@ -311,8 +311,6 @@ private async Task<List<string>> ValidarActivacionGrupoAsync(int idGrupo)
         grupoNuevo.Nombre = grupoNuevo.Nombre.Trim();
         grupoNuevo.Jornada = grupoNuevo.Jornada.Trim();
         grupoNuevo.TipoGrupo = grupoNuevo.TipoGrupo.Trim();
-        grupoNuevo.Materia = grupoNuevo.Materia?.Trim() ?? string.Empty;
-        grupoNuevo.Dias = grupoNuevo.Dias?.Trim() ?? string.Empty;
         grupoNuevo.Activo = true;
     }
 
@@ -324,8 +322,6 @@ private async Task<List<string>> ValidarActivacionGrupoAsync(int idGrupo)
         grupoModificado.Nombre = grupoModificado.Nombre.Trim();
         grupoModificado.Jornada = grupoModificado.Jornada.Trim();
         grupoModificado.TipoGrupo = grupoModificado.TipoGrupo.Trim();
-        grupoModificado.Materia = grupoModificado.Materia?.Trim() ?? string.Empty;
-        grupoModificado.Dias = grupoModificado.Dias?.Trim() ?? string.Empty;
     }
 
     // Agrega un error cuando se cumple una condición inválida.
