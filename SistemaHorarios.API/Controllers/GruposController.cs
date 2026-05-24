@@ -180,6 +180,30 @@ public class GruposController : ControllerBase
         });
     }
 
+// Activa nuevamente un grupo académico.
+[HttpPatch("{id}/activar")]
+public async Task<ActionResult<ApiResponse<int>>> ActivarGrupo(int id)
+{
+    List<string> errores = await gestorGrupo.ActivarGrupoAsync(id);
+
+    if (errores.Count > 0)
+    {
+        return BadRequest(new ApiResponse<List<string>>
+        {
+            Success = false,
+            Message = "No se pudo activar el grupo.",
+            Data = errores
+        });
+    }
+
+    return Ok(new ApiResponse<int>
+    {
+        Success = true,
+        Message = "Grupo activado correctamente.",
+        Data = id
+    });
+}
+
     // Consulta la cantidad de estudiantes asociada a un grupo.
     [HttpGet("{id}/cupos")]
     public async Task<ActionResult<ApiResponse<GrupoCuposResponse>>> ObtenerCuposGrupo(int id)
@@ -300,6 +324,7 @@ public class GruposController : ControllerBase
             TipoGrupo = grupo.TipoGrupo,
             NumeroSemestre = grupo.NumeroSemestre,
             CantidadEstudiantes = grupo.CantidadEstudiantes,
+            IdPlanAcademico = grupo.IdPlanAcademico,
             Materia = grupo.Materia,
             Dias = grupo.Dias,
             Activo = grupo.Activo,

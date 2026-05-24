@@ -70,6 +70,48 @@ public class GestorGrupo
         return errores;
     }
 
+// Activa nuevamente un grupo académico.
+public async Task<List<string>> ActivarGrupoAsync(int idGrupo)
+{
+    List<string> errores = await ValidarActivacionGrupoAsync(idGrupo);
+
+    if (errores.Count > 0)
+    {
+        return errores;
+    }
+
+    await grupoRepository.ActivarGrupoAsync(idGrupo);
+
+    return errores;
+}
+
+// Valida que el grupo exista antes de activarlo.
+private async Task<List<string>> ValidarActivacionGrupoAsync(int idGrupo)
+{
+    List<string> errores = new List<string>();
+
+    AgregarErrorSi(
+        idGrupo <= 0,
+        errores,
+        "El identificador del grupo no es válido."
+    );
+
+    if (errores.Count > 0)
+    {
+        return errores;
+    }
+
+    bool existeGrupo = await grupoRepository.ExisteGrupoPorIdAsync(idGrupo);
+
+    AgregarErrorSi(
+        !existeGrupo,
+        errores,
+        "El grupo que desea activar no existe."
+    );
+
+    return errores;
+}
+
     // Consulta un grupo por su identificador.
     public async Task<Grupo?> ConsultarGrupoPorIdAsync(int idGrupo)
     {
