@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SistemaHorarios.Modelos.Entidades;
 
-// Representa un grupo académico asociado a un plan académico y a una jornada.
+// Representa una sección de estudiantes asociada a un plan académico, jornada y semestre.
 public class Grupo
 {
     [Key]
@@ -22,10 +22,6 @@ public class Grupo
     public int CantidadEstudiantes { get; set; }
 
     public int IdPlanAcademico { get; set; }
-
-    public string Materia { get; set; } = string.Empty;
-
-    public string Dias { get; set; } = string.Empty;
 
     public bool Activo { get; set; } = true;
 
