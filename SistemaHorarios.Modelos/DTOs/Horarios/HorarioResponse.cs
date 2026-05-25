@@ -42,4 +42,6 @@ public class HorarioResponse
     public bool Activo { get; set; }
 
     public string EstadoTexto { get; set; } = string.Empty;
+
+    public string MotivoRechazo { get; set; } = string.Empty;
 }

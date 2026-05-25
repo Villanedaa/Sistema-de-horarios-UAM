@@ -21,6 +21,10 @@ public class Horario
 
     public bool Activo { get; set; } = true;
 
+    public string Estado { get; set; } = "Pendiente";
+
+    public string MotivoRechazo { get; set; } = string.Empty;
+
     [ForeignKey(nameof(IdGrupo))]
     public Grupo? Grupo { get; set; }
 

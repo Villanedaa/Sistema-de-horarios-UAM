@@ -25,6 +25,8 @@ public class HorarioDocenteResponse
 
     public string NombreMateria { get; set; } = string.Empty;
 
+    public int IdFranjaHoraria { get; set; }
+
     public string DiaSemana { get; set; } = string.Empty;
 
     public TimeSpan HoraInicio { get; set; }
@@ -34,4 +36,6 @@ public class HorarioDocenteResponse
     public string HorarioTexto { get; set; } = string.Empty;
 
     public string EstadoTexto { get; set; } = string.Empty;
+
+    public string MotivoRechazo { get; set; } = string.Empty;
 }

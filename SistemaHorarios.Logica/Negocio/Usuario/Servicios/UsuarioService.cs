@@ -1,6 +1,7 @@
-﻿using SistemaHorarios.Datos.Interfaces;
+using SistemaHorarios.Datos.Interfaces;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Logica.Negocio.Usuario.Interface;
+using SistemaHorarios.Modelos.Constantes;
 using SistemaHorarios.Modelos.DTOs.Usuarios;
 using UsuarioEntidad = SistemaHorarios.Modelos.Entidades.Usuario;
 
@@ -19,12 +20,12 @@ public class UsuarioService : IUsuarioService
         _passwordService = passwordService;
     }
 
-    public async Task<UsuarioResponseDto> CrearUsuarioAsync(
-        CrearUsuarioDto dto)
+    public async Task<UsuarioResponseDto> CrearUsuarioAsync(CrearUsuarioDto dto)
     {
+        ValidarEstado(dto.Estado);
+
         bool existeCorreo =
-            await _usuarioRepository.ExisteCorreoAsync(
-                dto.CorreoInstitucional);
+            await _usuarioRepository.ExisteCorreoAsync(dto.CorreoInstitucional);
 
         if (existeCorreo)
         {
@@ -32,8 +33,7 @@ public class UsuarioService : IUsuarioService
         }
 
         bool existeCedula =
-            await _usuarioRepository.ExisteCedulaAsync(
-                dto.Cedula);
+            await _usuarioRepository.ExisteCedulaAsync(dto.Cedula);
 
         if (existeCedula)
         {
@@ -42,35 +42,26 @@ public class UsuarioService : IUsuarioService
 
         var usuario = new UsuarioEntidad
         {
-            NombreCompleto = dto.NombreCompleto,
-            Cedula = dto.Cedula,
-            CorreoInstitucional = dto.CorreoInstitucional,
-            ContrasenaHash =
-                _passwordService.HashPassword(dto.Contrasena),
+            NombreCompleto = dto.NombreCompleto.Trim(),
+            Cedula = dto.Cedula.Trim(),
+            CorreoInstitucional = dto.CorreoInstitucional.Trim(),
+            ContrasenaHash = _passwordService.HashPassword(dto.Contrasena),
             IdRol = dto.IdRol,
-            Estado = dto.Estado,
-            Celular = dto.Celular
+            Estado = NormalizarEstado(dto.Estado),
+            Celular = dto.Celular?.Trim() ?? string.Empty
         };
 
-        var usuarioCreado =
-            await _usuarioRepository.CrearAsync(usuario);
+        var usuarioCreado = await _usuarioRepository.CrearAsync(usuario);
 
         var usuarioConRol =
-            await _usuarioRepository.ObtenerPorIdAsync(
-                usuarioCreado.IdUsuario);
+            await _usuarioRepository.ObtenerPorIdAsync(usuarioCreado.IdUsuario);
 
-        if (usuarioConRol == null)
-        {
-            return MapearUsuario(usuarioCreado);
-        }
-
-        return MapearUsuario(usuarioConRol);
+        return MapearUsuario(usuarioConRol ?? usuarioCreado);
     }
 
     public async Task<UsuarioResponseDto?> ObtenerPorIdAsync(int id)
     {
-        var usuario =
-            await _usuarioRepository.ObtenerPorIdAsync(id);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(id);
 
         if (usuario == null)
         {
@@ -84,8 +75,7 @@ public class UsuarioService : IUsuarioService
         int idUsuario,
         string fotoPerfilUrl)
     {
-        var usuario =
-            await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
 
         if (usuario == null)
         {
@@ -99,52 +89,94 @@ public class UsuarioService : IUsuarioService
 
     public async Task<IEnumerable<UsuarioResponseDto>> ObtenerTodosAsync()
     {
-        var usuarios =
-            await _usuarioRepository.ObtenerTodosAsync();
+        var usuarios = await _usuarioRepository.ObtenerTodosAsync();
 
-        return usuarios.Select(usuario => MapearUsuario(usuario));
+        return usuarios.Select(MapearUsuario);
+    }
+
+    public async Task<IEnumerable<UsuarioResponseDto>> ObtenerCoordinadoresAsync()
+    {
+        var usuarios = await _usuarioRepository.ObtenerTodosAsync();
+
+        return usuarios
+            .Where(usuario =>
+                string.Equals(
+                    usuario.Rol?.Nombre,
+                    RolesSistema.Coordinador,
+                    StringComparison.OrdinalIgnoreCase))
+            .Select(MapearUsuario);
     }
 
     public async Task<bool> ActualizarUsuarioAsync(
         int id,
         ActualizarUsuarioDto dto)
     {
-        var usuario =
-            await _usuarioRepository.ObtenerPorIdAsync(id);
+        ValidarEstado(dto.Estado);
+
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(id);
 
         if (usuario == null)
         {
             return false;
         }
 
-        usuario.NombreCompleto = dto.NombreCompleto;
-        usuario.Cedula = dto.Cedula;
-        usuario.CorreoInstitucional = dto.CorreoInstitucional;
+        bool correoEnUso =
+            await _usuarioRepository.ExisteCorreoEnOtroUsuarioAsync(
+                dto.CorreoInstitucional,
+                id);
+
+        if (correoEnUso)
+        {
+            throw new Exception("El correo ya está registrado por otro usuario.");
+        }
+
+        bool cedulaEnUso =
+            await _usuarioRepository.ExisteCedulaEnOtroUsuarioAsync(
+                dto.Cedula,
+                id);
+
+        if (cedulaEnUso)
+        {
+            throw new Exception("La cédula ya está registrada por otro usuario.");
+        }
+
+        usuario.NombreCompleto = dto.NombreCompleto.Trim();
+        usuario.Cedula = dto.Cedula.Trim();
+        usuario.CorreoInstitucional = dto.CorreoInstitucional.Trim();
         usuario.IdRol = dto.IdRol;
-        usuario.Estado = dto.Estado;
-        usuario.Celular = dto.Celular;
+        usuario.Estado = NormalizarEstado(dto.Estado);
+        usuario.Celular = dto.Celular?.Trim() ?? string.Empty;
+
+        return await _usuarioRepository.ActualizarAsync(usuario);
+    }
+
+    public async Task<bool> CambiarEstadoUsuarioAsync(
+        int id,
+        string estado)
+    {
+        ValidarEstado(estado);
+
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(id);
+
+        if (usuario == null)
+        {
+            return false;
+        }
+
+        usuario.Estado = NormalizarEstado(estado);
 
         return await _usuarioRepository.ActualizarAsync(usuario);
     }
 
     public async Task<bool> EliminarUsuarioAsync(int id)
     {
-        var usuario =
-            await _usuarioRepository.ObtenerPorIdAsync(id);
-
-        if (usuario == null)
-        {
-            return false;
-        }
-
-        return await _usuarioRepository.EliminarAsync(usuario);
+        // Para coordinadores y usuarios del sistema se usa inactivación lógica.
+        return await CambiarEstadoUsuarioAsync(id, "Inactivo");
     }
 
-    public async Task<UsuarioResponseDto?> ObtenerPerfilAsync(
-        int idUsuario)
+    public async Task<UsuarioResponseDto?> ObtenerPerfilAsync(int idUsuario)
     {
-        var usuario =
-            await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
 
         if (usuario == null)
         {
@@ -158,17 +190,16 @@ public class UsuarioService : IUsuarioService
         int idUsuario,
         ActualizarPerfilDto dto)
     {
-        var usuario =
-            await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
 
         if (usuario == null)
         {
             return false;
         }
 
-        usuario.NombreCompleto = dto.NombreCompleto;
-        usuario.CorreoInstitucional = dto.CorreoInstitucional;
-        usuario.Celular = dto.Celular;
+        usuario.NombreCompleto = dto.NombreCompleto.Trim();
+        usuario.CorreoInstitucional = dto.CorreoInstitucional.Trim();
+        usuario.Celular = dto.Celular?.Trim() ?? string.Empty;
 
         return await _usuarioRepository.ActualizarAsync(usuario);
     }
@@ -177,8 +208,7 @@ public class UsuarioService : IUsuarioService
         int idUsuario,
         CambiarContrasenaDto dto)
     {
-        var usuario =
-            await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
 
         if (usuario == null)
         {
@@ -196,8 +226,7 @@ public class UsuarioService : IUsuarioService
         }
 
         usuario.ContrasenaHash =
-            _passwordService.HashPassword(
-                dto.NuevaContrasena);
+            _passwordService.HashPassword(dto.NuevaContrasena);
 
         return await _usuarioRepository.ActualizarAsync(usuario);
     }
@@ -211,8 +240,7 @@ public class UsuarioService : IUsuarioService
         if (!string.IsNullOrWhiteSpace(dto.Cedula))
         {
             existeCedula =
-                await _usuarioRepository.ExisteCedulaAsync(
-                    dto.Cedula);
+                await _usuarioRepository.ExisteCedulaAsync(dto.Cedula);
         }
 
         if (!string.IsNullOrWhiteSpace(dto.CorreoInstitucional))
@@ -229,20 +257,42 @@ public class UsuarioService : IUsuarioService
         };
     }
 
-    private UsuarioResponseDto MapearUsuario(
-    	UsuarioEntidad usuario)
+    private static void ValidarEstado(string estado)
     {
-    	return new UsuarioResponseDto
-    	{
-        IdUsuario = usuario.IdUsuario,
-        NombreCompleto = usuario.NombreCompleto,
-        Cedula = usuario.Cedula,
-        CorreoInstitucional = usuario.CorreoInstitucional,
-        IdRol = usuario.IdRol,
-        Rol = usuario.Rol?.Nombre ?? string.Empty,
-        Estado = usuario.Estado,
-        Celular = usuario.Celular,
-        FotoPerfilUrl = usuario.FotoPerfilUrl
-    };
-}
+        string estadoNormalizado = NormalizarEstado(estado);
+
+        if (estadoNormalizado != "Activo" && estadoNormalizado != "Inactivo")
+        {
+            throw new Exception("El estado del usuario debe ser Activo o Inactivo.");
+        }
+    }
+
+    private static string NormalizarEstado(string estado)
+    {
+        if (string.Equals(
+            estado?.Trim(),
+            "Inactivo",
+            StringComparison.OrdinalIgnoreCase))
+        {
+            return "Inactivo";
+        }
+
+        return "Activo";
+    }
+
+    private static UsuarioResponseDto MapearUsuario(UsuarioEntidad usuario)
+    {
+        return new UsuarioResponseDto
+        {
+            IdUsuario = usuario.IdUsuario,
+            NombreCompleto = usuario.NombreCompleto,
+            Cedula = usuario.Cedula,
+            CorreoInstitucional = usuario.CorreoInstitucional,
+            IdRol = usuario.IdRol,
+            Rol = usuario.Rol?.Nombre ?? string.Empty,
+            Estado = usuario.Estado,
+            Celular = usuario.Celular,
+            FotoPerfilUrl = usuario.FotoPerfilUrl
+        };
+    }
 }

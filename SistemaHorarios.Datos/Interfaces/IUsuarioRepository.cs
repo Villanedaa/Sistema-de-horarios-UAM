@@ -1,4 +1,4 @@
-﻿using SistemaHorarios.Modelos.Entidades;
+using SistemaHorarios.Modelos.Entidades;
 
 namespace SistemaHorarios.Datos.Interfaces;
 
@@ -17,6 +17,10 @@ public interface IUsuarioRepository
     Task<bool> ExisteCorreoAsync(string correo);
 
     Task<bool> ExisteCedulaAsync(string cedula);
+
+    Task<bool> ExisteCorreoEnOtroUsuarioAsync(string correo, int idUsuarioActual);
+
+    Task<bool> ExisteCedulaEnOtroUsuarioAsync(string cedula, int idUsuarioActual);
 
     Task GuardarCambiosAsync();
 }

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Modelos.Responses;
 
@@ -6,119 +5,49 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/historial-cambios")]
-[Authorize(Roles = "Administrador")]
 public class HistorialCambiosController : ControllerBase
 {
-    public record CambioItem(
-        int IdCambio,
-        string Fecha,
-        string Hora,
-        string Usuario,
-        string Modulo,
-        string Descripcion);
-
-    private static readonly CambioItem[] _datos = Array.Empty<CambioItem>();
-
     [HttpGet]
-    public ActionResult<ApiResponse<CambioItem[]>> ObtenerHistorialCambios(
-        [FromQuery] string? usuario,
-        [FromQuery] string? modulo,
-        [FromQuery] string? fechaDesde,
-        [FromQuery] string? fechaHasta)
+    public ActionResult<ApiResponse<List<object>>> ObtenerHistorialCambios()
     {
-        IEnumerable<CambioItem> query = _datos;
-
-        if (!string.IsNullOrWhiteSpace(usuario))
+        return Ok(new ApiResponse<List<object>>
         {
-            query = query.Where(x =>
-                x.Usuario.Equals(usuario, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (!string.IsNullOrWhiteSpace(modulo))
-        {
-            query = query.Where(x =>
-                x.Modulo.Equals(modulo, StringComparison.OrdinalIgnoreCase));
-        }
-
-        if (DateTime.TryParse(fechaDesde, out var desde))
-        {
-            query = query.Where(x =>
-                DateTime.Parse($"{x.Fecha} {x.Hora}").Date >= desde.Date);
-        }
-
-        if (DateTime.TryParse(fechaHasta, out var hasta))
-        {
-            query = query.Where(x =>
-                DateTime.Parse($"{x.Fecha} {x.Hora}").Date <= hasta.Date);
-        }
-
-        CambioItem[] resultado = query
-            .OrderByDescending(x => x.Fecha)
-            .ThenByDescending(x => x.Hora)
-            .ToArray();
-
-        return Ok(new ApiResponse<CambioItem[]>
-        {
-            Success = true,
-            Message = "Historial de cambios consultado correctamente.",
-            Data = resultado
-        });
-    }
-
-    [HttpGet("{id}")]
-    public ActionResult<ApiResponse<CambioItem>> ObtenerCambioPorId(int id)
-    {
-        CambioItem? item = _datos.FirstOrDefault(x => x.IdCambio == id);
-
-        if (item == null)
-        {
-            return NotFound(new ApiResponse<CambioItem>
-            {
-                Success = false,
-                Message = "Cambio no encontrado.",
-                Data = null
-            });
-        }
-
-        return Ok(new ApiResponse<CambioItem>
-        {
-            Success = true,
-            Message = "Cambio consultado correctamente.",
-            Data = item
+            Success = false,
+            Message = "El módulo de historial de cambios está deshabilitado.",
+            Data = new List<object>()
         });
     }
 
     [HttpGet("modulos")]
-    public ActionResult<ApiResponse<string[]>> ObtenerModulos()
+    public ActionResult<ApiResponse<List<string>>> ObtenerModulos()
     {
-        string[] modulos = _datos
-            .Select(x => x.Modulo)
-            .Distinct()
-            .OrderBy(m => m)
-            .ToArray();
-
-        return Ok(new ApiResponse<string[]>
+        return Ok(new ApiResponse<List<string>>
         {
             Success = true,
-            Message = "Módulos del historial consultados correctamente.",
-            Data = modulos
+            Message = "Historial deshabilitado.",
+            Data = new List<string>()
+        });
+    }
+
+    [HttpGet("acciones")]
+    public ActionResult<ApiResponse<List<string>>> ObtenerAcciones()
+    {
+        return Ok(new ApiResponse<List<string>>
+        {
+            Success = true,
+            Message = "Historial deshabilitado.",
+            Data = new List<string>()
         });
     }
 
     [HttpGet("usuarios")]
-    public ActionResult<ApiResponse<string[]>> ObtenerUsuarios()
+    public ActionResult<ApiResponse<List<string>>> ObtenerUsuarios()
     {
-        string[] usuarios = _datos
-            .Select(x => x.Usuario)
-            .Distinct()
-            .OrderBy(u => u)
-            .ToArray();
-
-        return Ok(new ApiResponse<string[]>
+        return Ok(new ApiResponse<List<string>>
         {
             Success = true,
-            Message = "Usuarios del historial consultados correctamente.",
-            Data = usuarios
+            Message = "Historial deshabilitado.",
+            Data = new List<string>()
         });
     }
 }
