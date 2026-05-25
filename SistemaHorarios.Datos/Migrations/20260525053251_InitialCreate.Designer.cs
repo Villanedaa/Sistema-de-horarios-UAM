@@ -12,8 +12,8 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    [Migration("20260517161859_AjustarEntidadesHorario")]
-    partial class AjustarEntidadesHorario
+    [Migration("20260525053251_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -408,6 +408,10 @@ namespace SistemaHorarios.Datos.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Celular")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("ContrasenaHash")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -418,6 +422,9 @@ namespace SistemaHorarios.Datos.Migrations
 
                     b.Property<string>("Estado")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FotoPerfilUrl")
                         .HasColumnType("longtext");
 
                     b.Property<int>("IdRol")

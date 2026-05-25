@@ -17,14 +17,7 @@ public class HistorialCambiosController : ControllerBase
         string Modulo,
         string Descripcion);
 
-    private static readonly CambioItem[] _datos =
-    {
-        new(1, "2026-04-27", "07:26", "admin.horarios", "Horarios", "Actualizó límite de créditos nocturno para validación"),
-        new(2, "2026-04-27", "10:45", "coord.sistemas", "Horarios", "Generó propuesta PROP-2026-01-A"),
-        new(3, "2026-04-27", "15:40", "admin.horarios", "Docentes", "Registró disponibilidad de Marcela"),
-        new(4, "2026-04-28", "09:10", "admin.general", "Usuarios", "Creó cuenta para nuevo coordinador"),
-        new(5, "2026-04-28", "11:30", "coord.sistemas", "Horarios", "Aprobó propuesta PROP-2026-01-A")
-    };
+    private static readonly CambioItem[] _datos = Array.Empty<CambioItem>();
 
     [HttpGet]
     public ActionResult<ApiResponse<CambioItem[]>> ObtenerHistorialCambios(
