@@ -32,6 +32,15 @@ public static class ExtensionesServicios
         var connectionString =
             configuration.GetConnectionString("DefaultConnection");
 
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "La cadena de conexión 'DefaultConnection' no está configurada. " +
+                "Configúrala en appsettings.Development.json o mediante la variable " +
+                "ConnectionStrings__DefaultConnection."
+            );
+        }
+
         services.AddDbContext<SistemaHorariosDbContext>(
             options =>
                 options.UseMySql(
@@ -86,10 +95,10 @@ public static class ExtensionesServicios
         services.AddScoped<IDashboardService, DashboardService>();
 
         // Docentes
-
         services.AddScoped<IDocenteRepository, DocenteRepository>();
-
         services.AddScoped<IGestorDocente, GestorDocente>();
+        services.AddScoped<IDisponibilidadDocenteRepository, DisponibilidadDocenteRepository>();
+        services.AddScoped<IGestorDisponibilidadDocente, GestorDisponibilidadDocente>();
 
         //Horarios
         services.AddScoped<GestorHorario>();

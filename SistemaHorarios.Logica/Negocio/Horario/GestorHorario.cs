@@ -1,6 +1,7 @@
 ﻿using SistemaHorarios.Datos.Repositorios;
 using SistemaHorarios.Modelos.Entidades;
 using HorarioEntidad = SistemaHorarios.Modelos.Entidades.Horario;
+using DocenteEntidad = SistemaHorarios.Modelos.Entidades.Docente;
 
 namespace SistemaHorarios.Logica.Negocio.Horarios;
 
@@ -60,7 +61,7 @@ public class GestorHorario
         HorarioEntidad horarioModificado)
     {
         List<string> errores =
-            await ValidarModificacionHorarioAsync(idHorario, horarioModificado);
+            await ValidarModificacionAsignaturaAsync(idHorario, horarioModificado);
 
         if (errores.Count > 0)
         {
@@ -156,18 +157,157 @@ public class GestorHorario
         return await horarioRepository.BuscarHorariosPorDocenteAsync(busqueda);
     }
 
+    // Genera automáticamente bloques de horario para un grupo basándose en su plan académico.
+    public async Task<(int Generados, List<string> Errores)> GenerarHorariosAsync(int idGrupo)
+    {
+        var errores = new List<string>();
+        int generados = 0;
+
+        var grupo = await horarioRepository.ObtenerGrupoPorIdAsync(idGrupo);
+        if (grupo == null)
+        {
+            errores.Add("El grupo no existe o está inactivo.");
+            return (0, errores);
+        }
+
+        var materias = await horarioRepository.ObtenerMateriasDelGrupoAsync(idGrupo);
+        if (materias.Count == 0)
+        {
+            errores.Add("No hay materias definidas para este grupo en el plan académico.");
+            return (0, errores);
+        }
+
+        var todasFranjas = await horarioRepository.ObtenerFranjasActivasAsync();
+        if (todasFranjas.Count == 0)
+        {
+            errores.Add("No hay franjas horarias activas en el sistema.");
+            return (0, errores);
+        }
+
+        var franjasUsadasGrupo = await horarioRepository.ObtenerFranjasUsadasPorGrupoAsync(idGrupo);
+        var franjasUsadasDocentes = new Dictionary<int, HashSet<int>>();
+
+        foreach (var materia in materias)
+        {
+            var docentes = await horarioRepository.ObtenerDocentesPorMateriaAsync(materia.IdMateria);
+            if (docentes.Count == 0) continue;
+
+            int blocksNeeded = Math.Max(1, materia.IntensidadHorariaSemanal);
+            int blocksCreated = 0;
+
+            foreach (var franja in todasFranjas)
+            {
+                if (blocksCreated >= blocksNeeded) break;
+                if (franjasUsadasGrupo.Contains(franja.IdFranjaHoraria)) continue;
+
+                DocenteEntidad? docenteElegido = null;
+
+                // Primera pasada: docente con disponibilidad registrada
+                foreach (var docente in docentes)
+                {
+                    if (!franjasUsadasDocentes.ContainsKey(docente.IdDocente))
+                        franjasUsadasDocentes[docente.IdDocente] =
+                            await horarioRepository.ObtenerFranjasUsadasPorDocenteAsync(docente.IdDocente);
+
+                    if (franjasUsadasDocentes[docente.IdDocente].Contains(franja.IdFranjaHoraria))
+                        continue;
+
+                    bool disponible = await horarioRepository.ExisteDisponibilidadDocenteAsync(
+                        docente.IdDocente, franja);
+                    if (disponible) { docenteElegido = docente; break; }
+                }
+
+                // Segunda pasada: cualquier docente sin conflicto (sin exigir disponibilidad)
+                if (docenteElegido == null)
+                {
+                    foreach (var docente in docentes)
+                    {
+                        if (!franjasUsadasDocentes.ContainsKey(docente.IdDocente))
+                            franjasUsadasDocentes[docente.IdDocente] =
+                                await horarioRepository.ObtenerFranjasUsadasPorDocenteAsync(docente.IdDocente);
+
+                        if (!franjasUsadasDocentes[docente.IdDocente].Contains(franja.IdFranjaHoraria))
+                        { docenteElegido = docente; break; }
+                    }
+                }
+
+                if (docenteElegido == null) continue;
+
+                var horario = new HorarioEntidad
+                {
+                    IdGrupo = idGrupo,
+                    IdMateria = materia.IdMateria,
+                    IdDocente = docenteElegido.IdDocente,
+                    IdFranjaHoraria = franja.IdFranjaHoraria,
+                    Activo = true,
+                    Observacion = "Generado automáticamente"
+                };
+
+                await horarioRepository.CrearHorarioAsync(horario);
+
+                franjasUsadasGrupo.Add(franja.IdFranjaHoraria);
+                franjasUsadasDocentes[docenteElegido.IdDocente].Add(franja.IdFranjaHoraria);
+                blocksCreated++;
+                generados++;
+            }
+        }
+
+        if (generados == 0)
+            errores.Add("No fue posible asignar bloques. Verifique que los docentes estén asignados a las materias del grupo.");
+
+        return (generados, errores);
+    }
+
     // Valida las reglas necesarias para crear un horario.
     private async Task<List<string>> ValidarCreacionHorarioAsync(
         HorarioEntidad horarioNuevo)
     {
         List<string> errores = validadorHorario.Validar(horarioNuevo);
 
-        if (horarioNuevo == null)
-        {
+        if (errores.Count > 0)
             return errores;
-        }
 
         await ValidarReglasGeneralesAsync(horarioNuevo, errores, 0);
+
+        return errores;
+    }
+
+    // Valida las reglas para modificar solo la asignatura, sin exigir disponibilidad registrada.
+    private async Task<List<string>> ValidarModificacionAsignaturaAsync(
+        int idHorario,
+        HorarioEntidad horarioModificado)
+    {
+        List<string> errores = validadorHorario.Validar(horarioModificado);
+
+        AgregarErrorSi(
+            idHorario <= 0,
+            errores,
+            "El identificador del horario no es válido."
+        );
+
+        if (errores.Count > 0)
+            return errores;
+
+        bool existeHorario =
+            await horarioRepository.ExisteHorarioPorIdAsync(idHorario);
+
+        AgregarErrorSi(
+            !existeHorario,
+            errores,
+            "El horario que desea modificar no existe."
+        );
+
+        if (errores.Count > 0)
+            return errores;
+
+        await ValidarExistenciasAsync(horarioModificado, errores);
+
+        if (errores.Count > 0)
+            return errores;
+
+        await ValidarDocenteMateriaAsync(horarioModificado, errores);
+        await ValidarCruceDocenteAsync(horarioModificado, errores, idHorario);
+        await ValidarCruceGrupoAsync(horarioModificado, errores, idHorario);
 
         return errores;
     }
@@ -185,10 +325,8 @@ public class GestorHorario
             "El identificador del horario no es válido."
         );
 
-        if (horarioModificado == null)
-        {
+        if (errores.Count > 0)
             return errores;
-        }
 
         bool existeHorario =
             await horarioRepository.ExisteHorarioPorIdAsync(idHorario);
@@ -198,6 +336,9 @@ public class GestorHorario
             errores,
             "El horario que desea modificar no existe."
         );
+
+        if (errores.Count > 0)
+            return errores;
 
         await ValidarReglasGeneralesAsync(horarioModificado, errores, idHorario);
 

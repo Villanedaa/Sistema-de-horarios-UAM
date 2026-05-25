@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Dashboard.Interfaces;
 using SistemaHorarios.Modelos.DTOs.Dashboard;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
@@ -18,11 +19,15 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("resumen")]
-    public async Task<ActionResult<DashboardResumenDto>> ObtenerResumen()
+    public async Task<ActionResult<ApiResponse<DashboardResumenDto>>> ObtenerResumen()
     {
-        var resumen =
-            await _dashboardService.ObtenerResumenAsync();
+        var resumen = await _dashboardService.ObtenerResumenAsync();
 
-        return Ok(resumen);
+        return Ok(new ApiResponse<DashboardResumenDto>
+        {
+            Success = true,
+            Message = "Resumen del dashboard consultado correctamente.",
+            Data = resumen
+        });
     }
 }

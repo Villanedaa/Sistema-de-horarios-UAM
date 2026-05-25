@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.PlanAcademico.Interfaces;
 using SistemaHorarios.Modelos.DTOs.PlanAcademico;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Administrador")]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class PlanAcademicoController : ControllerBase
 {
     private readonly IPlanAcademicoService _planAcademicoService;
@@ -19,16 +20,21 @@ public class PlanAcademicoController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<PlanAcademicoResponseDto>>> ObtenerTodos()
+    public async Task<ActionResult<ApiResponse<List<PlanAcademicoResponseDto>>>> ObtenerTodos()
     {
         var planes =
             await _planAcademicoService.ObtenerTodosAsync();
 
-        return Ok(planes);
+        return Ok(new ApiResponse<List<PlanAcademicoResponseDto>>
+        {
+            Success = true,
+            Message = "Planes académicos obtenidos correctamente.",
+            Data = planes
+        });
     }
 
     [HttpGet("{idPlanAcademico}")]
-    public async Task<ActionResult<PlanAcademicoResponseDto>> ObtenerPorId(
+    public async Task<ActionResult<ApiResponse<PlanAcademicoResponseDto>>> ObtenerPorId(
         int idPlanAcademico)
     {
         var plan =
@@ -36,24 +42,38 @@ public class PlanAcademicoController : ControllerBase
 
         if (plan == null)
         {
-            return NotFound("Plan académico no encontrado.");
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Plan académico no encontrado."
+            });
         }
 
-        return Ok(plan);
+        return Ok(new ApiResponse<PlanAcademicoResponseDto>
+        {
+            Success = true,
+            Message = "Plan académico obtenido correctamente.",
+            Data = plan
+        });
     }
 
     [HttpPost]
-    public async Task<ActionResult<PlanAcademicoResponseDto>> Crear(
+    public async Task<ActionResult<ApiResponse<PlanAcademicoResponseDto>>> Crear(
         CrearPlanAcademicoDto dto)
     {
         var planCreado =
             await _planAcademicoService.CrearAsync(dto);
 
-        return Ok(planCreado);
+        return Ok(new ApiResponse<PlanAcademicoResponseDto>
+        {
+            Success = true,
+            Message = "Plan académico creado correctamente.",
+            Data = planCreado
+        });
     }
 
     [HttpPut("{idPlanAcademico}")]
-    public async Task<ActionResult> Actualizar(
+    public async Task<ActionResult<ApiResponse<object>>> Actualizar(
         int idPlanAcademico,
         ActualizarPlanAcademicoDto dto)
     {
@@ -64,29 +84,70 @@ public class PlanAcademicoController : ControllerBase
 
         if (!actualizado)
         {
-            return NotFound("Plan académico no encontrado.");
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Plan académico no encontrado."
+            });
         }
 
-        return Ok("Plan académico actualizado correctamente.");
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Plan académico actualizado correctamente."
+        });
     }
 
     [HttpDelete("{idPlanAcademico}")]
-    public async Task<ActionResult> Eliminar(
-        int idPlanAcademico)
+    public async Task<ActionResult<ApiResponse<int>>> Eliminar(
+    int idPlanAcademico)
     {
         bool eliminado =
             await _planAcademicoService.EliminarAsync(idPlanAcademico);
 
         if (!eliminado)
         {
-            return NotFound("Plan académico no encontrado.");
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Plan académico no encontrado."
+            });
         }
 
-        return Ok("Plan académico eliminado correctamente.");
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Plan académico inactivado correctamente.",
+            Data = idPlanAcademico
+        });
+    }
+
+    [HttpPatch("{idPlanAcademico}/activar")]
+    public async Task<ActionResult<ApiResponse<int>>> Activar(
+    int idPlanAcademico)
+    {
+        bool activado =
+            await _planAcademicoService.ActivarAsync(idPlanAcademico);
+
+        if (!activado)
+        {
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Plan académico no encontrado."
+            });
+        }
+
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Plan académico activado correctamente.",
+            Data = idPlanAcademico
+        });
     }
 
     [HttpPost("{idPlanAcademico}/semestres")]
-    public async Task<ActionResult<SemestrePlanResponseDto>> AgregarSemestre(
+    public async Task<ActionResult<ApiResponse<SemestrePlanResponseDto>>> AgregarSemestre(
         int idPlanAcademico,
         CrearSemestrePlanDto dto)
     {
@@ -95,11 +156,16 @@ public class PlanAcademicoController : ControllerBase
                 idPlanAcademico,
                 dto);
 
-        return Ok(semestreCreado);
+        return Ok(new ApiResponse<SemestrePlanResponseDto>
+        {
+            Success = true,
+            Message = "Semestre agregado correctamente.",
+            Data = semestreCreado
+        });
     }
 
     [HttpPost("semestres/{idSemestrePlan}/materias")]
-    public async Task<ActionResult<MateriaPlanResponseDto>> AgregarMateriaASemestre(
+    public async Task<ActionResult<ApiResponse<MateriaPlanResponseDto>>> AgregarMateriaASemestre(
         int idSemestrePlan,
         AgregarMateriaPlanDto dto)
     {
@@ -108,11 +174,16 @@ public class PlanAcademicoController : ControllerBase
                 idSemestrePlan,
                 dto);
 
-        return Ok(materiaAgregada);
+        return Ok(new ApiResponse<MateriaPlanResponseDto>
+        {
+            Success = true,
+            Message = "Materia agregada al semestre correctamente.",
+            Data = materiaAgregada
+        });
     }
 
     [HttpDelete("materias/{idMateriaPlan}")]
-    public async Task<ActionResult> EliminarMateriaDelPlan(
+    public async Task<ActionResult<ApiResponse<object>>> EliminarMateriaDelPlan(
         int idMateriaPlan)
     {
         bool eliminada =
@@ -121,9 +192,17 @@ public class PlanAcademicoController : ControllerBase
 
         if (!eliminada)
         {
-            return NotFound("Materia del plan no encontrada.");
+            return NotFound(new ApiResponse<object>
+            {
+                Success = false,
+                Message = "Materia del plan no encontrada."
+            });
         }
 
-        return Ok("Materia eliminada del plan correctamente.");
+        return Ok(new ApiResponse<object>
+        {
+            Success = true,
+            Message = "Materia eliminada del plan correctamente."
+        });
     }
 }

@@ -8,6 +8,7 @@ namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/franjas-horarias")]
+[Authorize(Roles = "Administrador,Coordinador")]
 public class FranjasHorariasController
     : ControllerBase
 {

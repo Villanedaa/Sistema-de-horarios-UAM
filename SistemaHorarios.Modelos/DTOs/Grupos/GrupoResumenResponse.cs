@@ -17,6 +17,8 @@ public class GrupoResumenResponse
 
     public int CantidadEstudiantes { get; set; }
 
+    public int IdPlanAcademico { get; set; }
+
     public bool Activo { get; set; }
 
     public string EstadoTexto { get; set; } = string.Empty;

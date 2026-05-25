@@ -100,6 +100,48 @@ namespace SistemaHorarios.Logica.Negocio.Materias
             return errores;
         }
 
+        // Valida que la materia exista antes de reactivarla.
+        private async Task<List<string>> ValidarActivacionMateriaAsync(int idMateria)
+        {
+            List<string> errores = new List<string>();
+
+            AgregarErrorSi(
+                idMateria <= 0,
+                errores,
+                "El identificador de la materia no es válido."
+            );
+
+            if (errores.Count > 0)
+            {
+                return errores;
+            }
+
+            bool existeMateria = await materiaRepositorio.ExisteMateriaPorIdAsync(idMateria);
+
+            AgregarErrorSi(
+                !existeMateria,
+                errores,
+                "La materia que desea activar no existe."
+            );
+
+            return errores;
+        }
+
+        // Reactiva una materia existente.
+        public async Task<List<string>> ActivarMateriaAsync(int idMateria)
+        {
+            List<string> errores = await ValidarActivacionMateriaAsync(idMateria);
+
+            if (errores.Count > 0)
+            {
+                return errores;
+            }
+
+            await materiaRepositorio.ActivarMateriaAsync(idMateria);
+
+            return errores;
+        }
+
         // Valida las reglas necesarias para crear una materia.
         private async Task<List<string>> ValidarCreacionMateriaAsync(Materia materiaNueva)
         {

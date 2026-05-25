@@ -11,4 +11,6 @@ public class DocenteResponse
     public string CorreoInstitucional { get; set; } = string.Empty;
 
     public bool Activo { get; set; }
+
+    public List<string> Materias { get; set; } = new();
 }

@@ -48,7 +48,8 @@ public class UsuarioService : IUsuarioService
             ContrasenaHash =
                 _passwordService.HashPassword(dto.Contrasena),
             IdRol = dto.IdRol,
-            Estado = dto.Estado
+            Estado = dto.Estado,
+            Celular = dto.Celular
         };
 
         var usuarioCreado =
@@ -79,6 +80,23 @@ public class UsuarioService : IUsuarioService
         return MapearUsuario(usuario);
     }
 
+    public async Task<bool> ActualizarFotoPerfilAsync(
+        int idUsuario,
+        string fotoPerfilUrl)
+    {
+        var usuario =
+            await _usuarioRepository.ObtenerPorIdAsync(idUsuario);
+
+        if (usuario == null)
+        {
+            return false;
+        }
+
+        usuario.FotoPerfilUrl = fotoPerfilUrl;
+
+        return await _usuarioRepository.ActualizarAsync(usuario);
+    }
+
     public async Task<IEnumerable<UsuarioResponseDto>> ObtenerTodosAsync()
     {
         var usuarios =
@@ -104,6 +122,7 @@ public class UsuarioService : IUsuarioService
         usuario.CorreoInstitucional = dto.CorreoInstitucional;
         usuario.IdRol = dto.IdRol;
         usuario.Estado = dto.Estado;
+        usuario.Celular = dto.Celular;
 
         return await _usuarioRepository.ActualizarAsync(usuario);
     }
@@ -149,6 +168,7 @@ public class UsuarioService : IUsuarioService
 
         usuario.NombreCompleto = dto.NombreCompleto;
         usuario.CorreoInstitucional = dto.CorreoInstitucional;
+        usuario.Celular = dto.Celular;
 
         return await _usuarioRepository.ActualizarAsync(usuario);
     }
@@ -210,17 +230,19 @@ public class UsuarioService : IUsuarioService
     }
 
     private UsuarioResponseDto MapearUsuario(
-        UsuarioEntidad usuario)
+    	UsuarioEntidad usuario)
     {
-        return new UsuarioResponseDto
-        {
-            IdUsuario = usuario.IdUsuario,
-            NombreCompleto = usuario.NombreCompleto,
-            Cedula = usuario.Cedula,
-            CorreoInstitucional = usuario.CorreoInstitucional,
-            IdRol = usuario.IdRol,
-            Rol = usuario.Rol?.Nombre ?? string.Empty,
-            Estado = usuario.Estado
-        };
-    }
+    	return new UsuarioResponseDto
+    	{
+        IdUsuario = usuario.IdUsuario,
+        NombreCompleto = usuario.NombreCompleto,
+        Cedula = usuario.Cedula,
+        CorreoInstitucional = usuario.CorreoInstitucional,
+        IdRol = usuario.IdRol,
+        Rol = usuario.Rol?.Nombre ?? string.Empty,
+        Estado = usuario.Estado,
+        Celular = usuario.Celular,
+        FotoPerfilUrl = usuario.FotoPerfilUrl
+    };
+}
 }

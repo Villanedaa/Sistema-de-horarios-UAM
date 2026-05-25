@@ -303,4 +303,88 @@ public class HorarioRepository
 
         return true;
     }
+
+    // Obtiene un grupo por su identificador.
+    public async Task<Grupo?> ObtenerGrupoPorIdAsync(int idGrupo)
+    {
+        return await contexto.Grupos
+            .FirstOrDefaultAsync(g => g.IdGrupo == idGrupo && g.Activo);
+    }
+
+    // Obtiene las materias activas del semestre al que pertenece el grupo.
+    // Si no hay SemestrePlan configurado, busca por el nombre de materia del grupo.
+
+    // Obtiene las materias activas del semestre al que pertenece el grupo.
+    public async Task<List<Materia>> ObtenerMateriasDelGrupoAsync(int idGrupo)
+    {
+        Grupo? grupo = await contexto.Grupos
+            .FirstOrDefaultAsync(g => g.IdGrupo == idGrupo && g.Activo);
+
+        if (grupo == null)
+        {
+            return new List<Materia>();
+        }
+
+        SemestrePlan? semestrePlan = await contexto.SemestresPlan
+            .FirstOrDefaultAsync(s =>
+                s.IdPlanAcademico == grupo.IdPlanAcademico &&
+                s.NumeroSemestre == grupo.NumeroSemestre);
+
+        if (semestrePlan == null)
+        {
+            return new List<Materia>();
+        }
+
+        return await contexto.MateriasPlan
+            .Include(mp => mp.Materia)
+            .Where(mp =>
+                mp.IdSemestrePlan == semestrePlan.IdSemestrePlan &&
+                mp.Materia != null &&
+                mp.Materia.Activa)
+            .Select(mp => mp.Materia!)
+            .ToListAsync();
+    }
+    // Obtiene los docentes activos asignados a una materia.
+    public async Task<List<Docente>> ObtenerDocentesPorMateriaAsync(int idMateria)
+    {
+        return await contexto.DocenteMaterias
+            .Include(dm => dm.Docente)
+            .Where(dm =>
+                dm.IdMateria == idMateria &&
+                dm.Activo &&
+                dm.Docente != null &&
+                dm.Docente.Activo)
+            .Select(dm => dm.Docente!)
+            .ToListAsync();
+    }
+
+    // Obtiene todas las franjas horarias activas ordenadas por día y hora.
+    public async Task<List<FranjaHoraria>> ObtenerFranjasActivasAsync()
+    {
+        return await contexto.FranjasHorarias
+            .Where(f => f.Activa)
+            .OrderBy(f => f.DiaSemana)
+            .ThenBy(f => f.HoraInicio)
+            .ToListAsync();
+    }
+
+    // Retorna los IDs de franjas ya usadas por un grupo (en horarios activos).
+    public async Task<HashSet<int>> ObtenerFranjasUsadasPorGrupoAsync(int idGrupo)
+    {
+        var ids = await contexto.Horarios
+            .Where(h => h.IdGrupo == idGrupo && h.Activo)
+            .Select(h => h.IdFranjaHoraria)
+            .ToListAsync();
+        return ids.ToHashSet();
+    }
+
+    // Retorna los IDs de franjas ya usadas por un docente (en horarios activos).
+    public async Task<HashSet<int>> ObtenerFranjasUsadasPorDocenteAsync(int idDocente)
+    {
+        var ids = await contexto.Horarios
+            .Where(h => h.IdDocente == idDocente && h.Activo)
+            .Select(h => h.IdFranjaHoraria)
+            .ToListAsync();
+        return ids.ToHashSet();
+    }
 }

@@ -15,4 +15,8 @@ public class UsuarioResponseDto
     public string Rol { get; set; } = string.Empty;
 
     public string Estado { get; set; } = string.Empty;
+
+    public string Celular { get; set; } = string.Empty;
+
+    public string? FotoPerfilUrl { get; set; }
 }

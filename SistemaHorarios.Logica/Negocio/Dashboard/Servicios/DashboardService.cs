@@ -33,6 +33,9 @@ public class DashboardService : IDashboardService
             TotalFranjasHorarias =
                 await _context.FranjasHorarias.CountAsync(),
 
+            TotalGrupos =
+                await _context.Grupos.CountAsync(g => g.Activo),
+
             TotalPlanesAcademicos =
                 await _context.PlanesAcademicos.CountAsync(),
 

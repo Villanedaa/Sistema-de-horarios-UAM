@@ -1,89 +1,131 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SistemaHorarios.Modelos.Responses;
 
 namespace SistemaHorarios.API.Controllers;
 
 [ApiController]
 [Route("api/historial-cambios")]
+[Authorize(Roles = "Administrador")]
 public class HistorialCambiosController : ControllerBase
 {
+    public record CambioItem(
+        int IdCambio,
+        string Fecha,
+        string Hora,
+        string Usuario,
+        string Modulo,
+        string Descripcion);
+
+    private static readonly CambioItem[] _datos =
+    {
+        new(1, "2026-04-27", "07:26", "admin.horarios", "Horarios", "Actualizó límite de créditos nocturno para validación"),
+        new(2, "2026-04-27", "10:45", "coord.sistemas", "Horarios", "Generó propuesta PROP-2026-01-A"),
+        new(3, "2026-04-27", "15:40", "admin.horarios", "Docentes", "Registró disponibilidad de Marcela"),
+        new(4, "2026-04-28", "09:10", "admin.general", "Usuarios", "Creó cuenta para nuevo coordinador"),
+        new(5, "2026-04-28", "11:30", "coord.sistemas", "Horarios", "Aprobó propuesta PROP-2026-01-A")
+    };
+
     [HttpGet]
-    public IActionResult ObtenerHistorialCambios(
+    public ActionResult<ApiResponse<CambioItem[]>> ObtenerHistorialCambios(
         [FromQuery] string? usuario,
         [FromQuery] string? modulo,
         [FromQuery] string? fechaDesde,
         [FromQuery] string? fechaHasta)
     {
-        return Ok(new[]
+        IEnumerable<CambioItem> query = _datos;
+
+        if (!string.IsNullOrWhiteSpace(usuario))
         {
-            new
-            {
-                IdCambio = 1,
-                Fecha = "2026-04-27",
-                Hora = "07:26",
-                Usuario = "admin.horarios",
-                Modulo = "Horarios",
-                Descripcion = "Actualizó límite de créditos nocturno para validación"
-            },
-            new
-            {
-                IdCambio = 2,
-                Fecha = "2026-04-27",
-                Hora = "10:45",
-                Usuario = "coord.sistemas",
-                Modulo = "Horarios",
-                Descripcion = "Generó propuesta PROP-2026-01-A"
-            },
-            new
-            {
-                IdCambio = 3,
-                Fecha = "2026-04-27",
-                Hora = "15:40",
-                Usuario = "admin.horarios",
-                Modulo = "Docentes",
-                Descripcion = "Registró disponibilidad de Marcela"
-            }
+            query = query.Where(x =>
+                x.Usuario.Equals(usuario, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(modulo))
+        {
+            query = query.Where(x =>
+                x.Modulo.Equals(modulo, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (DateTime.TryParse(fechaDesde, out var desde))
+        {
+            query = query.Where(x =>
+                DateTime.Parse($"{x.Fecha} {x.Hora}").Date >= desde.Date);
+        }
+
+        if (DateTime.TryParse(fechaHasta, out var hasta))
+        {
+            query = query.Where(x =>
+                DateTime.Parse($"{x.Fecha} {x.Hora}").Date <= hasta.Date);
+        }
+
+        CambioItem[] resultado = query
+            .OrderByDescending(x => x.Fecha)
+            .ThenByDescending(x => x.Hora)
+            .ToArray();
+
+        return Ok(new ApiResponse<CambioItem[]>
+        {
+            Success = true,
+            Message = "Historial de cambios consultado correctamente.",
+            Data = resultado
         });
     }
 
     [HttpGet("{id}")]
-    public IActionResult ObtenerCambioPorId(int id)
+    public ActionResult<ApiResponse<CambioItem>> ObtenerCambioPorId(int id)
     {
-        return Ok(new
+        CambioItem? item = _datos.FirstOrDefault(x => x.IdCambio == id);
+
+        if (item == null)
         {
-            IdCambio = id,
-            Fecha = "2026-04-27",
-            Hora = "07:26",
-            Usuario = "admin.horarios",
-            Modulo = "Horarios",
-            Descripcion = "Actualizó límite de créditos nocturno para validación",
-            DetalleAnterior = "Límite anterior: 16 créditos",
-            DetalleNuevo = "Nuevo límite: 18 créditos"
+            return NotFound(new ApiResponse<CambioItem>
+            {
+                Success = false,
+                Message = "Cambio no encontrado.",
+                Data = null
+            });
+        }
+
+        return Ok(new ApiResponse<CambioItem>
+        {
+            Success = true,
+            Message = "Cambio consultado correctamente.",
+            Data = item
         });
     }
 
     [HttpGet("modulos")]
-    public IActionResult ObtenerModulos()
+    public ActionResult<ApiResponse<string[]>> ObtenerModulos()
     {
-        return Ok(new[]
+        string[] modulos = _datos
+            .Select(x => x.Modulo)
+            .Distinct()
+            .OrderBy(m => m)
+            .ToArray();
+
+        return Ok(new ApiResponse<string[]>
         {
-            "Plan académico",
-            "Docentes",
-            "Horarios",
-            "Materias",
-            "Reportes",
-            "Grupos académicos",
-            "Usuarios"
+            Success = true,
+            Message = "Módulos del historial consultados correctamente.",
+            Data = modulos
         });
     }
 
     [HttpGet("usuarios")]
-    public IActionResult ObtenerUsuarios()
+    public ActionResult<ApiResponse<string[]>> ObtenerUsuarios()
     {
-        return Ok(new[]
+        string[] usuarios = _datos
+            .Select(x => x.Usuario)
+            .Distinct()
+            .OrderBy(u => u)
+            .ToArray();
+
+        return Ok(new ApiResponse<string[]>
         {
-            "admin.horarios",
-            "coord.sistemas",
-            "admin.general"
+            Success = true,
+            Message = "Usuarios del historial consultados correctamente.",
+            Data = usuarios
         });
     }
 }

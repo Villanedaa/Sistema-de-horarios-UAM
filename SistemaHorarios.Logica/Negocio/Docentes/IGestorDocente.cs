@@ -13,4 +13,6 @@ public interface IGestorDocente
     Task ActualizarAsync(int id, DocenteRequest dto);
 
     Task EliminarAsync(int id);
+ 
+    Task ActivarAsync(int id);
 }

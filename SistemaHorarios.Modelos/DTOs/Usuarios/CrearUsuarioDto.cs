@@ -27,4 +27,6 @@ public class CrearUsuarioDto
     public int IdRol { get; set; }
 
     public string Estado { get; set; } = "Activo";
+
+    public string Celular { get; set; } = string.Empty;
 }

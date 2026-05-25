@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SistemaHorarios.Datos.Contexto;
 
@@ -11,9 +12,11 @@ using SistemaHorarios.Datos.Contexto;
 namespace SistemaHorarios.Datos.Migrations
 {
     [DbContext(typeof(SistemaHorariosDbContext))]
-    partial class SistemaHorariosDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519233443_AgregarMateriaDiasGrupo")]
+    partial class AgregarMateriaDiasGrupo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -149,10 +152,18 @@ namespace SistemaHorarios.Datos.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Dias")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<int>("IdPlanAcademico")
                         .HasColumnType("int");
 
                     b.Property<string>("Jornada")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Materia")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -419,9 +430,6 @@ namespace SistemaHorarios.Datos.Migrations
 
                     b.Property<string>("Estado")
                         .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FotoPerfilUrl")
                         .HasColumnType("longtext");
 
                     b.Property<int>("IdRol")

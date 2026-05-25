@@ -64,4 +64,12 @@ public class Usuario
     /// Suspendido.
     /// </summary>
     public string Estado { get; set; } = "Activo";
+
+    public string Celular { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Ruta relativa de la foto de perfil del usuario.
+    /// Ejemplo: /uploads/perfiles/usuario_1.png
+    /// </summary>
+    public string? FotoPerfilUrl { get; set; }
 }
