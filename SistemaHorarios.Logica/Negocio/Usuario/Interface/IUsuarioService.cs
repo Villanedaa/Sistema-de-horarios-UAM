@@ -1,4 +1,3 @@
-﻿
 using SistemaHorarios.Modelos.DTOs.Usuarios;
 
 namespace SistemaHorarios.Logica.Negocio.Usuario.Interface;
@@ -11,7 +10,11 @@ public interface IUsuarioService
 
     Task<IEnumerable<UsuarioResponseDto>> ObtenerTodosAsync();
 
+    Task<IEnumerable<UsuarioResponseDto>> ObtenerCoordinadoresAsync();
+
     Task<bool> ActualizarUsuarioAsync(int id, ActualizarUsuarioDto dto);
+
+    Task<bool> CambiarEstadoUsuarioAsync(int id, string estado);
 
     Task<bool> EliminarUsuarioAsync(int id);
 

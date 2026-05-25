@@ -1,28 +1,33 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace SistemaHorarios.Modelos.Entidades;
+namespace SistemaHorarios.Modelos.DTOs.HistorialCambios;
 
 /// <summary>
-/// Representa una acción administrativa importante realizada dentro del sistema.
+/// DTO para mostrar un registro del historial de cambios.
 /// </summary>
-public class HistorialCambio
+public class HistorialCambioResponse
 {
-    [Key]
+    public int IdCambio { get; set; }
+
     public int IdHistorialCambio { get; set; }
 
     public int? IdUsuario { get; set; }
 
-    public string NombreUsuario { get; set; } = "Sistema";
+    public DateTime FechaHora { get; set; }
 
-    public string RolUsuario { get; set; } = "Sistema";
+    public string Fecha { get; set; } = string.Empty;
+
+    public string Hora { get; set; } = string.Empty;
+
+    public string Usuario { get; set; } = string.Empty;
+
+    public string NombreUsuario { get; set; } = string.Empty;
+
+    public string RolUsuario { get; set; } = string.Empty;
 
     public string Modulo { get; set; } = string.Empty;
 
     public string Accion { get; set; } = string.Empty;
 
     public string Descripcion { get; set; } = string.Empty;
-
-    public DateTime FechaHora { get; set; } = DateTime.Now;
 
     public string EntidadAfectada { get; set; } = string.Empty;
 

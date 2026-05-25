@@ -20,12 +20,11 @@ public class HorariosController : ControllerBase
         this.gestorHorario = gestorHorario;
     }
 
-    // Lista todos los horarios registrados.
+    // Lista todos los bloques de horarios activos.
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<HorarioResponse>>>> ObtenerHorarios()
     {
-        List<HorarioEntidad> horarios =
-            await gestorHorario.ListarHorariosAsync();
+        List<HorarioEntidad> horarios = await gestorHorario.ListarHorariosAsync();
 
         List<HorarioResponse> respuesta = horarios
             .Select(MapearHorarioResponse)
@@ -39,12 +38,11 @@ public class HorariosController : ControllerBase
         });
     }
 
-    // Consulta un horario por su identificador.
+    // Consulta un bloque de horario por su identificador.
     [HttpGet("{id}")]
     public async Task<ActionResult<ApiResponse<HorarioResponse>>> ObtenerHorarioPorId(int id)
     {
-        HorarioEntidad? horario =
-            await gestorHorario.ConsultarHorarioPorIdAsync(id);
+        HorarioEntidad? horario = await gestorHorario.ConsultarHorarioPorIdAsync(id);
 
         if (horario == null)
         {
@@ -64,7 +62,7 @@ public class HorariosController : ControllerBase
         });
     }
 
-    // Crea una nueva asignación de horario.
+    // Crea una nueva asignación manual de horario.
     [HttpPost]
     public async Task<ActionResult<ApiResponse<HorarioResponse>>> CrearHorario(
         [FromBody] GenerarHorarioRequest request)
@@ -78,8 +76,7 @@ public class HorariosController : ControllerBase
             Observacion = request.Observacion
         };
 
-        List<string> errores =
-            await gestorHorario.CrearHorarioAsync(horario);
+        List<string> errores = await gestorHorario.CrearHorarioAsync(horario);
 
         if (errores.Count > 0)
         {
@@ -94,10 +91,6 @@ public class HorariosController : ControllerBase
         HorarioEntidad? horarioCreado =
             await gestorHorario.ConsultarHorarioPorIdAsync(horario.IdHorario);
 
-        HorarioResponse respuesta = horarioCreado == null
-            ? MapearHorarioResponse(horario)
-            : MapearHorarioResponse(horarioCreado);
-
         return CreatedAtAction(
             nameof(ObtenerHorarioPorId),
             new { id = horario.IdHorario },
@@ -105,7 +98,9 @@ public class HorariosController : ControllerBase
             {
                 Success = true,
                 Message = "Horario creado correctamente.",
-                Data = respuesta
+                Data = horarioCreado == null
+                    ? MapearHorarioResponse(horario)
+                    : MapearHorarioResponse(horarioCreado)
             }
         );
     }
@@ -126,8 +121,7 @@ public class HorariosController : ControllerBase
             Activo = request.Activo
         };
 
-        List<string> errores =
-            await gestorHorario.ModificarHorarioAsync(id, horario);
+        List<string> errores = await gestorHorario.ModificarHorarioAsync(id, horario);
 
         if (errores.Count > 0)
         {
@@ -160,14 +154,13 @@ public class HorariosController : ControllerBase
         });
     }
 
-    // Actualiza solo la materia, docente y franja de un horario.
+    // Actualiza solo materia, docente y franja de un bloque.
     [HttpPut("{id}/asignatura")]
     public async Task<ActionResult<ApiResponse<HorarioResponse>>> ActualizarAsignaturaHorario(
         int id,
         [FromBody] ActualizarAsignaturaHorarioRequest request)
     {
-        HorarioEntidad horarioActual =
-            await gestorHorario.ConsultarHorarioPorIdAsync(id);
+        HorarioEntidad horarioActual = await gestorHorario.ConsultarHorarioPorIdAsync(id);
 
         if (horarioActual == null)
         {
@@ -197,7 +190,7 @@ public class HorariosController : ControllerBase
             return BadRequest(new ApiResponse<List<string>>
             {
                 Success = false,
-                Message = "No se pudo actualizar la asignatura del horario.",
+                Message = "No se pudo actualizar el bloque del horario.",
                 Data = errores
             });
         }
@@ -208,19 +201,16 @@ public class HorariosController : ControllerBase
         return Ok(new ApiResponse<HorarioResponse>
         {
             Success = true,
-            Message = "Asignatura del horario actualizada correctamente.",
-            Data = horarioActualizado == null
-                ? null
-                : MapearHorarioResponse(horarioActualizado)
+            Message = "Bloque actualizado correctamente. El horario vuelve a estado Pendiente.",
+            Data = horarioActualizado == null ? null : MapearHorarioResponse(horarioActualizado)
         });
     }
 
-    // Inactiva un horario sin eliminarlo físicamente.
+    // Inactiva un bloque sin eliminarlo físicamente.
     [HttpDelete("{id}")]
     public async Task<ActionResult<ApiResponse<int>>> EliminarHorario(int id)
     {
-        List<string> errores =
-            await gestorHorario.DesactivarHorarioAsync(id);
+        List<string> errores = await gestorHorario.DesactivarHorarioAsync(id);
 
         if (errores.Count > 0)
         {
@@ -240,13 +230,40 @@ public class HorariosController : ControllerBase
         });
     }
 
+    // Inactiva todos los bloques activos de un grupo.
+    [HttpDelete("grupo/{idGrupo}")]
+    public async Task<ActionResult<ApiResponse<int>>> EliminarHorarioGrupo(int idGrupo)
+    {
+        List<string> errores = await gestorHorario.DesactivarHorariosPorGrupoAsync(idGrupo);
+
+        if (errores.Count > 0)
+        {
+            return BadRequest(new ApiResponse<List<string>>
+            {
+                Success = false,
+                Message = "No se pudo inactivar el horario del grupo.",
+                Data = errores
+            });
+        }
+
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Horario del grupo inactivado correctamente.",
+            Data = idGrupo
+        });
+    }
+
     // Genera automáticamente los bloques de horario para un grupo.
     [HttpPost("generar/{idGrupo}")]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarHorario(int idGrupo)
+    public async Task<ActionResult<ApiResponse<object>>> GenerarHorario(
+        int idGrupo,
+        [FromQuery] bool reemplazar = true)
     {
-        var (generados, errores) = await gestorHorario.GenerarHorariosAsync(idGrupo);
+        var (generados, errores) =
+            await gestorHorario.GenerarHorariosAsync(idGrupo, reemplazar);
 
-        if (errores.Count > 0 && generados == 0)
+        if (generados == 0)
         {
             return BadRequest(new ApiResponse<List<string>>
             {
@@ -259,7 +276,9 @@ public class HorariosController : ControllerBase
         return Ok(new ApiResponse<object>
         {
             Success = true,
-            Message = "Proceso de generación de horario finalizado.",
+            Message = errores.Count == 0
+                ? "Horario generado correctamente."
+                : "Horario generado con advertencias.",
             Data = new
             {
                 Generados = generados,
@@ -268,10 +287,68 @@ public class HorariosController : ControllerBase
         });
     }
 
+    // Aprueba todos los bloques activos del grupo al que pertenece el horario indicado.
+    [HttpPost("{id}/aprobar")]
+    public async Task<ActionResult<ApiResponse<int>>> AprobarHorario(int id)
+    {
+        List<string> errores = await gestorHorario.AprobarHorarioAsync(id);
+
+        if (errores.Count > 0)
+        {
+            return BadRequest(new ApiResponse<List<string>>
+            {
+                Success = false,
+                Message = "No se pudo aprobar el horario.",
+                Data = errores
+            });
+        }
+
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Horario aprobado correctamente.",
+            Data = id
+        });
+    }
+
+    // Alias para compatibilidad con la UI anterior.
+    [HttpPut("{id}/aceptar")]
+    public async Task<ActionResult<ApiResponse<int>>> AceptarHorario(int id)
+    {
+        return await AprobarHorario(id);
+    }
+
+    // Rechaza todos los bloques activos del grupo al que pertenece el horario indicado.
+    [HttpPost("{id}/rechazar")]
+    public async Task<ActionResult<ApiResponse<int>>> RechazarHorario(
+        int id,
+        [FromBody] RechazarHorarioRequest? request)
+    {
+        string motivo = request?.MotivoRechazo ?? string.Empty;
+
+        List<string> errores = await gestorHorario.RechazarHorarioAsync(id, motivo);
+
+        if (errores.Count > 0)
+        {
+            return BadRequest(new ApiResponse<List<string>>
+            {
+                Success = false,
+                Message = "No se pudo rechazar el horario.",
+                Data = errores
+            });
+        }
+
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Horario rechazado correctamente.",
+            Data = id
+        });
+    }
+
     // Lista los horarios asociados a un grupo.
     [HttpGet("grupo/{idGrupo}")]
-    public async Task<ActionResult<ApiResponse<List<HorarioResponse>>>> ObtenerHorariosPorGrupo(
-        int idGrupo)
+    public async Task<ActionResult<ApiResponse<List<HorarioResponse>>>> ObtenerHorariosPorGrupo(int idGrupo)
     {
         List<HorarioEntidad> horarios =
             await gestorHorario.ListarHorariosPorGrupoAsync(idGrupo);
@@ -290,8 +367,7 @@ public class HorariosController : ControllerBase
 
     // Lista los horarios asociados a un docente.
     [HttpGet("docente/{idDocente}")]
-    public async Task<ActionResult<ApiResponse<List<HorarioDocenteResponse>>>> ObtenerHorariosPorDocente(
-        int idDocente)
+    public async Task<ActionResult<ApiResponse<List<HorarioDocenteResponse>>>> ObtenerHorariosPorDocente(int idDocente)
     {
         List<HorarioEntidad> horarios =
             await gestorHorario.ListarHorariosPorDocenteAsync(idDocente);
@@ -310,8 +386,7 @@ public class HorariosController : ControllerBase
 
     // Lista los horarios asociados a una materia.
     [HttpGet("materia/{idMateria}")]
-    public async Task<ActionResult<ApiResponse<List<HorarioResponse>>>> ObtenerHorariosPorMateria(
-        int idMateria)
+    public async Task<ActionResult<ApiResponse<List<HorarioResponse>>>> ObtenerHorariosPorMateria(int idMateria)
     {
         List<HorarioEntidad> horarios =
             await gestorHorario.ListarHorariosPorMateriaAsync(idMateria);
@@ -348,7 +423,6 @@ public class HorariosController : ControllerBase
         });
     }
 
-    // Convierte una entidad Horario en respuesta completa.
     private HorarioResponse MapearHorarioResponse(HorarioEntidad horario)
     {
         TimeSpan horaInicio = horario.FranjaHoraria?.HoraInicio ?? TimeSpan.Zero;
@@ -357,36 +431,30 @@ public class HorariosController : ControllerBase
         return new HorarioResponse
         {
             IdHorario = horario.IdHorario,
-
             IdGrupo = horario.IdGrupo,
             CodigoGrupo = horario.Grupo?.Codigo ?? string.Empty,
             NombreGrupo = horario.Grupo?.Nombre ?? string.Empty,
             Jornada = horario.Grupo?.Jornada ?? string.Empty,
             TipoGrupo = horario.Grupo?.TipoGrupo ?? string.Empty,
-
             IdMateria = horario.IdMateria,
             CodigoMateria = horario.Materia?.Codigo ?? string.Empty,
             NombreMateria = horario.Materia?.Nombre ?? string.Empty,
-
             IdDocente = horario.IdDocente,
             NombreDocente = horario.Docente?.NombreCompleto ?? string.Empty,
             IdentificacionDocente = horario.Docente?.Identificacion ?? string.Empty,
-
             IdFranjaHoraria = horario.IdFranjaHoraria,
             DiaSemana = horario.FranjaHoraria?.DiaSemana ?? string.Empty,
             HoraInicio = horaInicio,
             HoraFin = horaFin,
             HorarioTexto = ObtenerHorarioTexto(horaInicio, horaFin),
-
             Observacion = horario.Observacion,
             Activo = horario.Activo,
-            EstadoTexto = ObtenerEstadoTexto(horario.Activo)
+            EstadoTexto = ObtenerEstadoTexto(horario),
+            MotivoRechazo = horario.MotivoRechazo
         };
     }
 
-    // Convierte una entidad Horario en respuesta para horario docente.
-    private HorarioDocenteResponse MapearHorarioDocenteResponse(
-        HorarioEntidad horario)
+    private HorarioDocenteResponse MapearHorarioDocenteResponse(HorarioEntidad horario)
     {
         TimeSpan horaInicio = horario.FranjaHoraria?.HoraInicio ?? TimeSpan.Zero;
         TimeSpan horaFin = horario.FranjaHoraria?.HoraFin ?? TimeSpan.Zero;
@@ -394,43 +462,40 @@ public class HorariosController : ControllerBase
         return new HorarioDocenteResponse
         {
             IdHorario = horario.IdHorario,
-
             IdDocente = horario.IdDocente,
             NombreDocente = horario.Docente?.NombreCompleto ?? string.Empty,
             IdentificacionDocente = horario.Docente?.Identificacion ?? string.Empty,
             CorreoInstitucional = horario.Docente?.CorreoInstitucional ?? string.Empty,
-
             IdGrupo = horario.IdGrupo,
             CodigoGrupo = horario.Grupo?.Codigo ?? string.Empty,
             NombreGrupo = horario.Grupo?.Nombre ?? string.Empty,
-
             IdMateria = horario.IdMateria,
             CodigoMateria = horario.Materia?.Codigo ?? string.Empty,
             NombreMateria = horario.Materia?.Nombre ?? string.Empty,
-
+            IdFranjaHoraria = horario.IdFranjaHoraria,
             DiaSemana = horario.FranjaHoraria?.DiaSemana ?? string.Empty,
             HoraInicio = horaInicio,
             HoraFin = horaFin,
             HorarioTexto = ObtenerHorarioTexto(horaInicio, horaFin),
-
-            EstadoTexto = ObtenerEstadoTexto(horario.Activo)
+            EstadoTexto = ObtenerEstadoTexto(horario),
+            MotivoRechazo = horario.MotivoRechazo
         };
     }
 
-    // Retorna el horario en formato legible.
     private string ObtenerHorarioTexto(TimeSpan horaInicio, TimeSpan horaFin)
     {
         return $"{horaInicio:hh\\:mm} - {horaFin:hh\\:mm}";
     }
 
-    // Convierte el estado booleano en texto legible.
-    private string ObtenerEstadoTexto(bool activo)
+    private string ObtenerEstadoTexto(HorarioEntidad horario)
     {
-        if (activo)
+        if (!horario.Activo)
         {
-            return "Activo";
+            return "Inactivo";
         }
 
-        return "Inactivo";
+        return string.IsNullOrWhiteSpace(horario.Estado)
+            ? "Pendiente"
+            : horario.Estado;
     }
 }

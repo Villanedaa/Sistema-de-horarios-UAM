@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SistemaHorarios.Datos.Contexto;
 using SistemaHorarios.Datos.Interfaces;
 using SistemaHorarios.Modelos.Entidades;
@@ -40,8 +40,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         _context.Usuarios.Update(usuario);
 
-        int filasAfectadas =
-            await _context.SaveChangesAsync();
+        int filasAfectadas = await _context.SaveChangesAsync();
 
         return filasAfectadas > 0;
     }
@@ -50,8 +49,7 @@ public class UsuarioRepository : IUsuarioRepository
     {
         _context.Usuarios.Remove(usuario);
 
-        int filasAfectadas =
-            await _context.SaveChangesAsync();
+        int filasAfectadas = await _context.SaveChangesAsync();
 
         return filasAfectadas > 0;
     }
@@ -59,14 +57,32 @@ public class UsuarioRepository : IUsuarioRepository
     public async Task<bool> ExisteCorreoAsync(string correo)
     {
         return await _context.Usuarios
-            .AnyAsync(u =>
-                u.CorreoInstitucional == correo);
+            .AnyAsync(u => u.CorreoInstitucional == correo);
     }
 
     public async Task<bool> ExisteCedulaAsync(string cedula)
     {
         return await _context.Usuarios
+            .AnyAsync(u => u.Cedula == cedula);
+    }
+
+    public async Task<bool> ExisteCorreoEnOtroUsuarioAsync(
+        string correo,
+        int idUsuarioActual)
+    {
+        return await _context.Usuarios
             .AnyAsync(u =>
+                u.IdUsuario != idUsuarioActual &&
+                u.CorreoInstitucional == correo);
+    }
+
+    public async Task<bool> ExisteCedulaEnOtroUsuarioAsync(
+        string cedula,
+        int idUsuarioActual)
+    {
+        return await _context.Usuarios
+            .AnyAsync(u =>
+                u.IdUsuario != idUsuarioActual &&
                 u.Cedula == cedula);
     }
 

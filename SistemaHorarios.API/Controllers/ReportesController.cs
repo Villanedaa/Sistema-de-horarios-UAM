@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Reportes.Interfaces;
 using SistemaHorarios.Modelos.DTOs.Reportes;
@@ -82,5 +82,102 @@ public class ReportesController : ControllerBase
             Message = "Reporte de planes académicos consultado correctamente.",
             Data = reporte
         });
+    }
+
+    [HttpGet("horarios-generados")]
+    public async Task<ActionResult<ApiResponse<List<ReporteHorarioGeneradoDto>>>> ObtenerHorariosGenerados()
+    {
+        var reporte = await _reporteService.ObtenerHorariosGeneradosAsync();
+
+        return Ok(new ApiResponse<List<ReporteHorarioGeneradoDto>>
+        {
+            Success = true,
+            Message = "Reporte de horarios generados consultado correctamente.",
+            Data = reporte
+        });
+    }
+
+    [HttpGet("horario-grupo/{idGrupo:int}")]
+    public async Task<ActionResult<ApiResponse<List<ReporteHorarioGrupoDto>>>> ObtenerHorarioPorGrupo(
+        int idGrupo)
+    {
+        var reporte = await _reporteService.ObtenerHorarioPorGrupoAsync(idGrupo);
+
+        return Ok(new ApiResponse<List<ReporteHorarioGrupoDto>>
+        {
+            Success = true,
+            Message = "Reporte de horario por grupo consultado correctamente.",
+            Data = reporte
+        });
+    }
+
+    [HttpGet("horario-docente/{idDocente:int}")]
+    public async Task<ActionResult<ApiResponse<List<ReporteHorarioDocenteDto>>>> ObtenerHorarioPorDocente(
+        int idDocente)
+    {
+        var reporte = await _reporteService.ObtenerHorarioPorDocenteAsync(idDocente);
+
+        return Ok(new ApiResponse<List<ReporteHorarioDocenteDto>>
+        {
+            Success = true,
+            Message = "Reporte de horario por docente consultado correctamente.",
+            Data = reporte
+        });
+    }
+
+    [HttpGet("carga-docente")]
+    public async Task<ActionResult<ApiResponse<List<ReporteCargaDocenteDto>>>> ObtenerCargaDocente()
+    {
+        var reporte = await _reporteService.ObtenerCargaDocenteAsync();
+
+        return Ok(new ApiResponse<List<ReporteCargaDocenteDto>>
+        {
+            Success = true,
+            Message = "Reporte de carga docente consultado correctamente.",
+            Data = reporte
+        });
+    }
+
+    [HttpGet("conflictos-horarios")]
+    public async Task<ActionResult<ApiResponse<List<ReporteConflictoHorarioDto>>>> ObtenerConflictosHorario()
+    {
+        var reporte = await _reporteService.ObtenerConflictosHorarioAsync();
+
+        return Ok(new ApiResponse<List<ReporteConflictoHorarioDto>>
+        {
+            Success = true,
+            Message = "Reporte de conflictos de horario consultado correctamente.",
+            Data = reporte
+        });
+    }
+
+    [HttpGet("descargar")]
+    public async Task<IActionResult> DescargarReporte(
+        [FromQuery] string tipo,
+        [FromQuery] string formato = "csv",
+        [FromQuery] int? idGrupo = null,
+        [FromQuery] int? idDocente = null)
+    {
+        try
+        {
+            var archivo = await _reporteService.ExportarReporteAsync(
+                tipo,
+                formato,
+                idGrupo,
+                idDocente);
+
+            return File(
+                archivo.Archivo,
+                archivo.ContentType,
+                archivo.NombreArchivo);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new ApiResponse<string>
+            {
+                Success = false,
+                Message = ex.Message
+            });
+        }
     }
 }

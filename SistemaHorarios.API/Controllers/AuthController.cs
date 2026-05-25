@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Auth;
 using SistemaHorarios.Modelos.DTOs.Auth;
@@ -16,9 +16,6 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
 
-    /// <summary>
-    /// Inicializa el controlador de autenticación.
-    /// </summary>
     public AuthController(IAuthService authService)
     {
         _authService = authService;
@@ -31,31 +28,55 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<object>>> Registrar(
         [FromBody] RegistroUsuarioDto dto)
     {
-        await _authService.Registrar(dto);
-
-        return Ok(new ApiResponse<object>
+        try
         {
-            Success = true,
-            Message = "Usuario registrado correctamente.",
-            Data = null
-        });
+            await _authService.Registrar(dto);
+
+            return Ok(new ApiResponse<object>
+            {
+                Success = true,
+                Message = "Usuario registrado correctamente.",
+                Data = null
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<object>
+            {
+                Success = false,
+                Message = ex.Message,
+                Data = null
+            });
+        }
     }
 
     /// <summary>
-    /// Permite iniciar sesión y obtener un token JWT.
+    /// Permite iniciar sesión solo a usuarios activos.
     /// </summary>
     [HttpPost("login")]
     public async Task<ActionResult<ApiResponse<LoginResponseDto>>> Login(
         [FromBody] LoginRequestDto dto)
     {
-        LoginResponseDto resultado = await _authService.Login(dto);
-
-        return Ok(new ApiResponse<LoginResponseDto>
+        try
         {
-            Success = true,
-            Message = "Login exitoso.",
-            Data = resultado
-        });
+            LoginResponseDto resultado = await _authService.Login(dto);
+
+            return Ok(new ApiResponse<LoginResponseDto>
+            {
+                Success = true,
+                Message = "Login exitoso.",
+                Data = resultado
+            });
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(new ApiResponse<LoginResponseDto>
+            {
+                Success = false,
+                Message = ex.Message,
+                Data = null
+            });
+        }
     }
 
     /// <summary>
@@ -77,14 +98,27 @@ public class AuthController : ControllerBase
             });
         }
 
-        PerfilUsuarioDto perfil = await _authService.ObtenerPerfil(idUsuario.Value);
-
-        return Ok(new ApiResponse<PerfilUsuarioDto>
+        try
         {
-            Success = true,
-            Message = "Perfil obtenido correctamente.",
-            Data = perfil
-        });
+            PerfilUsuarioDto perfil =
+                await _authService.ObtenerPerfil(idUsuario.Value);
+
+            return Ok(new ApiResponse<PerfilUsuarioDto>
+            {
+                Success = true,
+                Message = "Perfil obtenido correctamente.",
+                Data = perfil
+            });
+        }
+        catch (Exception ex)
+        {
+            return NotFound(new ApiResponse<PerfilUsuarioDto>
+            {
+                Success = false,
+                Message = ex.Message,
+                Data = null
+            });
+        }
     }
 
     /// <summary>

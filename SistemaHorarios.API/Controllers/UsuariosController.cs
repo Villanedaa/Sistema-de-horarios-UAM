@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaHorarios.Logica.Negocio.Usuario.Interface;
 using SistemaHorarios.Modelos.DTOs.Usuarios;
@@ -24,78 +24,207 @@ public class UsuariosController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "Administrador")]
-    public async Task<ActionResult<IEnumerable<UsuarioResponseDto>>> ObtenerTodos()
+    public async Task<ActionResult<ApiResponse<IEnumerable<UsuarioResponseDto>>>> ObtenerTodos()
     {
-        var usuarios =
-            await _usuarioService.ObtenerTodosAsync();
+        var usuarios = await _usuarioService.ObtenerTodosAsync();
 
-        return Ok(usuarios);
+        return Ok(new ApiResponse<IEnumerable<UsuarioResponseDto>>
+        {
+            Success = true,
+            Message = "Usuarios consultados correctamente.",
+            Data = usuarios
+        });
+    }
+
+    [HttpGet("coordinadores")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult<ApiResponse<IEnumerable<UsuarioResponseDto>>>> ObtenerCoordinadores()
+    {
+        var coordinadores = await _usuarioService.ObtenerCoordinadoresAsync();
+
+        return Ok(new ApiResponse<IEnumerable<UsuarioResponseDto>>
+        {
+            Success = true,
+            Message = "Coordinadores consultados correctamente.",
+            Data = coordinadores
+        });
     }
 
     [HttpGet("{id}")]
     [Authorize(Roles = "Administrador")]
-    public async Task<ActionResult<UsuarioResponseDto>> ObtenerPorId(int id)
+    public async Task<ActionResult<ApiResponse<UsuarioResponseDto>>> ObtenerPorId(int id)
     {
-        var usuario =
-            await _usuarioService.ObtenerPorIdAsync(id);
+        var usuario = await _usuarioService.ObtenerPorIdAsync(id);
 
         if (usuario == null)
         {
-            return NotFound("Usuario no encontrado.");
+            return NotFound(new ApiResponse<UsuarioResponseDto>
+            {
+                Success = false,
+                Message = "Usuario no encontrado.",
+                Data = null
+            });
         }
 
-        return Ok(usuario);
+        return Ok(new ApiResponse<UsuarioResponseDto>
+        {
+            Success = true,
+            Message = "Usuario consultado correctamente.",
+            Data = usuario
+        });
     }
 
     [HttpPost]
     [Authorize(Roles = "Administrador")]
-    public async Task<ActionResult<UsuarioResponseDto>> Crear(
-        CrearUsuarioDto dto)
+    public async Task<ActionResult<ApiResponse<UsuarioResponseDto>>> Crear(
+        [FromBody] CrearUsuarioDto dto)
     {
-        var usuarioCreado =
-            await _usuarioService.CrearUsuarioAsync(dto);
+        try
+        {
+            var usuarioCreado = await _usuarioService.CrearUsuarioAsync(dto);
 
-        return Ok(usuarioCreado);
+            return Ok(new ApiResponse<UsuarioResponseDto>
+            {
+                Success = true,
+                Message = "Usuario creado correctamente.",
+                Data = usuarioCreado
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<UsuarioResponseDto>
+            {
+                Success = false,
+                Message = ex.Message,
+                Data = null
+            });
+        }
     }
 
     [HttpPut("{id}")]
     [Authorize(Roles = "Administrador")]
-    public async Task<ActionResult> Actualizar(
+    public async Task<ActionResult<ApiResponse<int>>> Actualizar(
         int id,
-        ActualizarUsuarioDto dto)
+        [FromBody] ActualizarUsuarioDto dto)
     {
-        bool actualizado =
-            await _usuarioService.ActualizarUsuarioAsync(id, dto);
-
-        if (!actualizado)
+        try
         {
-            return NotFound("Usuario no encontrado.");
-        }
+            bool actualizado =
+                await _usuarioService.ActualizarUsuarioAsync(id, dto);
 
-        return Ok("Usuario actualizado correctamente.");
+            if (!actualizado)
+            {
+                return NotFound(new ApiResponse<int>
+                {
+                    Success = false,
+                    Message = "Usuario no encontrado.",
+                    Data = id
+                });
+            }
+
+            return Ok(new ApiResponse<int>
+            {
+                Success = true,
+                Message = "Usuario actualizado correctamente.",
+                Data = id
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<int>
+            {
+                Success = false,
+                Message = ex.Message,
+                Data = id
+            });
+        }
+    }
+
+    [HttpPut("{id}/estado")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult<ApiResponse<int>>> CambiarEstado(
+        int id,
+        [FromBody] CambiarEstadoUsuarioDto dto)
+    {
+        try
+        {
+            bool actualizado =
+                await _usuarioService.CambiarEstadoUsuarioAsync(
+                    id,
+                    dto.Estado);
+
+            if (!actualizado)
+            {
+                return NotFound(new ApiResponse<int>
+                {
+                    Success = false,
+                    Message = "Usuario no encontrado.",
+                    Data = id
+                });
+            }
+
+            string mensaje = dto.Estado.Equals(
+                "Inactivo",
+                StringComparison.OrdinalIgnoreCase)
+                    ? "Usuario inactivado correctamente."
+                    : "Usuario activado correctamente.";
+
+            return Ok(new ApiResponse<int>
+            {
+                Success = true,
+                Message = mensaje,
+                Data = id
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new ApiResponse<int>
+            {
+                Success = false,
+                Message = ex.Message,
+                Data = id
+            });
+        }
+    }
+
+    [HttpPatch("{id}/activar")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<ActionResult<ApiResponse<int>>> Activar(int id)
+    {
+        return await CambiarEstado(
+            id,
+            new CambiarEstadoUsuarioDto { Estado = "Activo" });
     }
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Administrador")]
-    public async Task<ActionResult> Eliminar(int id)
+    public async Task<ActionResult<ApiResponse<int>>> Eliminar(int id)
     {
-        bool eliminado =
-            await _usuarioService.EliminarUsuarioAsync(id);
+        bool inactivado = await _usuarioService.EliminarUsuarioAsync(id);
 
-        if (!eliminado)
+        if (!inactivado)
         {
-            return NotFound("Usuario no encontrado.");
+            return NotFound(new ApiResponse<int>
+            {
+                Success = false,
+                Message = "Usuario no encontrado.",
+                Data = id
+            });
         }
 
-        return Ok("Usuario eliminado correctamente.");
+        return Ok(new ApiResponse<int>
+        {
+            Success = true,
+            Message = "Usuario inactivado correctamente.",
+            Data = id
+        });
     }
 
     [HttpGet("perfil")]
     [Authorize]
     public async Task<ActionResult<ApiResponse<UsuarioResponseDto>>> ObtenerPerfil()
     {
-        int? idUsuario =
-            ObtenerIdUsuarioDesdeToken();
+        int? idUsuario = ObtenerIdUsuarioDesdeToken();
 
         if (idUsuario == null)
         {
@@ -106,8 +235,7 @@ public class UsuariosController : ControllerBase
             });
         }
 
-        var perfil =
-            await _usuarioService.ObtenerPerfilAsync(idUsuario.Value);
+        var perfil = await _usuarioService.ObtenerPerfilAsync(idUsuario.Value);
 
         if (perfil == null)
         {
@@ -129,10 +257,9 @@ public class UsuariosController : ControllerBase
     [HttpPut("perfil")]
     [Authorize]
     public async Task<ActionResult<ApiResponse<object>>> ActualizarPerfil(
-    ActualizarPerfilDto dto)
+        ActualizarPerfilDto dto)
     {
-        int? idUsuario =
-            ObtenerIdUsuarioDesdeToken();
+        int? idUsuario = ObtenerIdUsuarioDesdeToken();
 
         if (idUsuario == null)
         {
@@ -168,10 +295,9 @@ public class UsuariosController : ControllerBase
     [Authorize]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<ApiResponse<string>>> ActualizarFotoPerfil(
-    IFormFile foto)
+        IFormFile foto)
     {
-        int? idUsuario =
-            ObtenerIdUsuarioDesdeToken();
+        int? idUsuario = ObtenerIdUsuarioDesdeToken();
 
         if (idUsuario == null)
         {
@@ -193,14 +319,13 @@ public class UsuariosController : ControllerBase
 
         string[] extensionesPermitidas =
         {
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".bmp"
-    };
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".bmp"
+        };
 
-        string extension =
-            Path.GetExtension(foto.FileName).ToLower();
+        string extension = Path.GetExtension(foto.FileName).ToLower();
 
         if (!extensionesPermitidas.Contains(extension))
         {
@@ -213,15 +338,10 @@ public class UsuariosController : ControllerBase
 
         string webRootPath =
             _environment.WebRootPath ??
-            Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot");
+            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
 
         string carpeta =
-            Path.Combine(
-                webRootPath,
-                "uploads",
-                "perfiles");
+            Path.Combine(webRootPath, "uploads", "perfiles");
 
         if (!Directory.Exists(carpeta))
         {
@@ -235,21 +355,15 @@ public class UsuariosController : ControllerBase
             System.IO.File.Delete(archivoAnterior);
         }
 
-        string nombreArchivo =
-            $"usuario_{idUsuario.Value}{extension}";
+        string nombreArchivo = $"usuario_{idUsuario.Value}{extension}";
+        string rutaArchivo = Path.Combine(carpeta, nombreArchivo);
 
-        string rutaArchivo =
-            Path.Combine(carpeta, nombreArchivo);
-
-        using (FileStream stream = new(
-            rutaArchivo,
-            FileMode.Create))
+        using (FileStream stream = new(rutaArchivo, FileMode.Create))
         {
             await foto.CopyToAsync(stream);
         }
 
-        string fotoPerfilUrl =
-            $"/uploads/perfiles/{nombreArchivo}";
+        string fotoPerfilUrl = $"/uploads/perfiles/{nombreArchivo}";
 
         bool actualizado =
             await _usuarioService.ActualizarFotoPerfilAsync(
@@ -276,10 +390,9 @@ public class UsuariosController : ControllerBase
     [HttpPut("cambiar-contrasena")]
     [Authorize]
     public async Task<ActionResult<ApiResponse<object>>> CambiarContrasena(
-    CambiarContrasenaDto dto)
+        CambiarContrasenaDto dto)
     {
-        int? idUsuario =
-            ObtenerIdUsuarioDesdeToken();
+        int? idUsuario = ObtenerIdUsuarioDesdeToken();
 
         if (idUsuario == null)
         {
@@ -312,13 +425,17 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpPost("verificar")]
-    public async Task<ActionResult<VerificarUsuarioResponseDto>> VerificarUsuario(
+    public async Task<ActionResult<ApiResponse<VerificarUsuarioResponseDto>>> VerificarUsuario(
         VerificarUsuarioDto dto)
     {
-        var resultado =
-            await _usuarioService.VerificarUsuarioAsync(dto);
+        var resultado = await _usuarioService.VerificarUsuarioAsync(dto);
 
-        return Ok(resultado);
+        return Ok(new ApiResponse<VerificarUsuarioResponseDto>
+        {
+            Success = true,
+            Message = "Verificación realizada correctamente.",
+            Data = resultado
+        });
     }
 
     private int? ObtenerIdUsuarioDesdeToken()

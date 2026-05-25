@@ -18,79 +18,59 @@ public class HorarioRepository
     // Lista todos los horarios registrados.
     public async Task<List<Horario>> ListarHorariosAsync()
     {
-        return await contexto.Horarios
-            .Include(horario => horario.Grupo)
-            .Include(horario => horario.Materia)
-            .Include(horario => horario.Docente)
-            .Include(horario => horario.FranjaHoraria)
+        return await ConsultaHorariosBase()
+            .OrderBy(h => h.Grupo!.Codigo)
+            .ThenBy(h => h.FranjaHoraria!.DiaSemana)
+            .ThenBy(h => h.FranjaHoraria!.HoraInicio)
             .ToListAsync();
     }
 
     // Lista únicamente los horarios activos.
     public async Task<List<Horario>> ListarHorariosActivosAsync()
     {
-        return await contexto.Horarios
-            .Include(horario => horario.Grupo)
-            .Include(horario => horario.Materia)
-            .Include(horario => horario.Docente)
-            .Include(horario => horario.FranjaHoraria)
+        return await ConsultaHorariosBase()
             .Where(horario => horario.Activo)
+            .OrderBy(h => h.Grupo!.Codigo)
+            .ThenBy(h => h.FranjaHoraria!.DiaSemana)
+            .ThenBy(h => h.FranjaHoraria!.HoraInicio)
             .ToListAsync();
     }
 
     // Busca un horario por su identificador.
     public async Task<Horario?> ObtenerHorarioPorIdAsync(int idHorario)
     {
-        return await contexto.Horarios
-            .Include(horario => horario.Grupo)
-            .Include(horario => horario.Materia)
-            .Include(horario => horario.Docente)
-            .Include(horario => horario.FranjaHoraria)
+        return await ConsultaHorariosBase()
             .FirstOrDefaultAsync(horario => horario.IdHorario == idHorario);
     }
 
     // Lista los horarios asociados a un grupo.
     public async Task<List<Horario>> ListarHorariosPorGrupoAsync(int idGrupo)
     {
-        return await contexto.Horarios
-            .Include(horario => horario.Grupo)
-            .Include(horario => horario.Materia)
-            .Include(horario => horario.Docente)
-            .Include(horario => horario.FranjaHoraria)
-            .Where(horario =>
-                horario.IdGrupo == idGrupo &&
-                horario.Activo
-            )
+        return await ConsultaHorariosBase()
+            .Where(horario => horario.IdGrupo == idGrupo && horario.Activo)
+            .OrderBy(h => h.FranjaHoraria!.DiaSemana)
+            .ThenBy(h => h.FranjaHoraria!.HoraInicio)
             .ToListAsync();
     }
 
     // Lista los horarios asociados a un docente.
     public async Task<List<Horario>> ListarHorariosPorDocenteAsync(int idDocente)
     {
-        return await contexto.Horarios
-            .Include(horario => horario.Grupo)
-            .Include(horario => horario.Materia)
-            .Include(horario => horario.Docente)
-            .Include(horario => horario.FranjaHoraria)
-            .Where(horario =>
-                horario.IdDocente == idDocente &&
-                horario.Activo
-            )
+        return await ConsultaHorariosBase()
+            .Where(horario => horario.IdDocente == idDocente && horario.Activo)
+            .OrderBy(h => h.FranjaHoraria!.DiaSemana)
+            .ThenBy(h => h.FranjaHoraria!.HoraInicio)
             .ToListAsync();
     }
 
     // Lista los horarios asociados a una materia.
     public async Task<List<Horario>> ListarHorariosPorMateriaAsync(int idMateria)
     {
-        return await contexto.Horarios
-            .Include(horario => horario.Grupo)
-            .Include(horario => horario.Materia)
-            .Include(horario => horario.Docente)
-            .Include(horario => horario.FranjaHoraria)
-            .Where(horario =>
-                horario.IdMateria == idMateria &&
-                horario.Activo
-            )
+        return await ConsultaHorariosBase()
+            .Where(horario => horario.IdMateria == idMateria && horario.Activo)
+            .OrderBy(h => h.Grupo!.Codigo)
+            .ThenBy(h => h.FranjaHoraria!.DiaSemana)
+            .ThenBy(h => h.FranjaHoraria!.HoraInicio)
             .ToListAsync();
     }
 
@@ -99,11 +79,7 @@ public class HorarioRepository
     {
         string busquedaLimpia = busqueda.Trim().ToLower();
 
-        return await contexto.Horarios
-            .Include(horario => horario.Grupo)
-            .Include(horario => horario.Materia)
-            .Include(horario => horario.Docente)
-            .Include(horario => horario.FranjaHoraria)
+        return await ConsultaHorariosBase()
             .Where(horario =>
                 horario.Activo &&
                 horario.Docente != null &&
@@ -113,6 +89,9 @@ public class HorarioRepository
                     horario.Docente.CorreoInstitucional.ToLower().Contains(busquedaLimpia)
                 )
             )
+            .OrderBy(h => h.Docente!.NombreCompleto)
+            .ThenBy(h => h.FranjaHoraria!.DiaSemana)
+            .ThenBy(h => h.FranjaHoraria!.HoraInicio)
             .ToListAsync();
     }
 
@@ -127,40 +106,28 @@ public class HorarioRepository
     public async Task<bool> ExisteGrupoAsync(int idGrupo)
     {
         return await contexto.Grupos
-            .AnyAsync(grupo =>
-                grupo.IdGrupo == idGrupo &&
-                grupo.Activo
-            );
+            .AnyAsync(grupo => grupo.IdGrupo == idGrupo && grupo.Activo);
     }
 
     // Verifica si existe la materia.
     public async Task<bool> ExisteMateriaAsync(int idMateria)
     {
         return await contexto.Materias
-            .AnyAsync(materia =>
-                materia.IdMateria == idMateria &&
-                materia.Activa
-            );
+            .AnyAsync(materia => materia.IdMateria == idMateria && materia.Activa);
     }
 
     // Verifica si existe el docente.
     public async Task<bool> ExisteDocenteAsync(int idDocente)
     {
         return await contexto.Docentes
-            .AnyAsync(docente =>
-                docente.IdDocente == idDocente &&
-                docente.Activo
-            );
+            .AnyAsync(docente => docente.IdDocente == idDocente && docente.Activo);
     }
 
     // Verifica si existe la franja horaria.
     public async Task<bool> ExisteFranjaHorariaAsync(int idFranjaHoraria)
     {
         return await contexto.FranjasHorarias
-            .AnyAsync(franja =>
-                franja.IdFranjaHoraria == idFranjaHoraria &&
-                franja.Activa
-            );
+            .AnyAsync(franja => franja.IdFranjaHoraria == idFranjaHoraria && franja.Activa);
     }
 
     // Obtiene una franja horaria por su identificador.
@@ -177,8 +144,7 @@ public class HorarioRepository
             .AnyAsync(docenteMateria =>
                 docenteMateria.IdDocente == idDocente &&
                 docenteMateria.IdMateria == idMateria &&
-                docenteMateria.Activo
-            );
+                docenteMateria.Activo);
     }
 
     // Verifica si el docente está disponible en la franja indicada.
@@ -192,38 +158,60 @@ public class HorarioRepository
                 disponibilidad.Disponible &&
                 disponibilidad.Dia.ToLower() == franjaHoraria.DiaSemana.ToLower() &&
                 disponibilidad.HoraInicio <= franjaHoraria.HoraInicio &&
-                disponibilidad.HoraFin >= franjaHoraria.HoraFin
-            );
+                disponibilidad.HoraFin >= franjaHoraria.HoraFin);
     }
 
-    // Verifica si el docente ya tiene clase en la misma franja.
+    // Verifica cruce real por rango horario del docente, no solo por ID de franja.
     public async Task<bool> ExisteCruceDocenteAsync(
         int idDocente,
-        int idFranjaHoraria,
-        int idHorarioExcluir)
+        FranjaHoraria franjaHoraria,
+        int idHorarioExcluir,
+        int idGrupoIgnorar = 0)
     {
         return await contexto.Horarios
+            .Include(h => h.FranjaHoraria)
             .AnyAsync(horario =>
+                horario.Activo &&
                 horario.IdHorario != idHorarioExcluir &&
                 horario.IdDocente == idDocente &&
-                horario.IdFranjaHoraria == idFranjaHoraria &&
-                horario.Activo
-            );
+                (idGrupoIgnorar <= 0 || horario.IdGrupo != idGrupoIgnorar) &&
+                horario.FranjaHoraria != null &&
+                horario.FranjaHoraria.DiaSemana.ToLower() == franjaHoraria.DiaSemana.ToLower() &&
+                horario.FranjaHoraria.HoraInicio < franjaHoraria.HoraFin &&
+                franjaHoraria.HoraInicio < horario.FranjaHoraria.HoraFin);
     }
 
-    // Verifica si el grupo ya tiene clase en la misma franja.
+    // Verifica cruce real por rango horario del grupo, no solo por ID de franja.
     public async Task<bool> ExisteCruceGrupoAsync(
         int idGrupo,
-        int idFranjaHoraria,
+        FranjaHoraria franjaHoraria,
         int idHorarioExcluir)
     {
         return await contexto.Horarios
+            .Include(h => h.FranjaHoraria)
             .AnyAsync(horario =>
+                horario.Activo &&
                 horario.IdHorario != idHorarioExcluir &&
                 horario.IdGrupo == idGrupo &&
-                horario.IdFranjaHoraria == idFranjaHoraria &&
-                horario.Activo
-            );
+                horario.FranjaHoraria != null &&
+                horario.FranjaHoraria.DiaSemana.ToLower() == franjaHoraria.DiaSemana.ToLower() &&
+                horario.FranjaHoraria.HoraInicio < franjaHoraria.HoraFin &&
+                franjaHoraria.HoraInicio < horario.FranjaHoraria.HoraFin);
+    }
+
+    // Obtiene los horarios activos de una materia dentro de un grupo.
+    public async Task<List<Horario>> ListarHorariosPorGrupoMateriaAsync(
+        int idGrupo,
+        int idMateria,
+        int idHorarioExcluir)
+    {
+        return await ConsultaHorariosBase()
+            .Where(h =>
+                h.Activo &&
+                h.IdGrupo == idGrupo &&
+                h.IdMateria == idMateria &&
+                h.IdHorario != idHorarioExcluir)
+            .ToListAsync();
     }
 
     // Guarda un nuevo horario.
@@ -233,14 +221,24 @@ public class HorarioRepository
         await contexto.SaveChangesAsync();
     }
 
+    // Guarda varios horarios en una sola operación.
+    public async Task CrearHorariosAsync(List<Horario> horarios)
+    {
+        if (horarios.Count == 0)
+        {
+            return;
+        }
+
+        await contexto.Horarios.AddRangeAsync(horarios);
+        await contexto.SaveChangesAsync();
+    }
+
     // Actualiza un horario existente.
     public async Task<bool> ActualizarHorarioAsync(Horario horarioModificado)
     {
         Horario? horarioActual =
             await contexto.Horarios
-                .FirstOrDefaultAsync(horario =>
-                    horario.IdHorario == horarioModificado.IdHorario
-                );
+                .FirstOrDefaultAsync(horario => horario.IdHorario == horarioModificado.IdHorario);
 
         if (horarioActual == null)
         {
@@ -253,6 +251,8 @@ public class HorarioRepository
         horarioActual.IdFranjaHoraria = horarioModificado.IdFranjaHoraria;
         horarioActual.Observacion = horarioModificado.Observacion;
         horarioActual.Activo = horarioModificado.Activo;
+        horarioActual.Estado = horarioModificado.Estado;
+        horarioActual.MotivoRechazo = horarioModificado.MotivoRechazo;
 
         await contexto.SaveChangesAsync();
 
@@ -264,9 +264,7 @@ public class HorarioRepository
     {
         Horario? horarioActual =
             await contexto.Horarios
-                .FirstOrDefaultAsync(horario =>
-                    horario.IdHorario == horarioModificado.IdHorario
-                );
+                .FirstOrDefaultAsync(horario => horario.IdHorario == horarioModificado.IdHorario);
 
         if (horarioActual == null)
         {
@@ -277,6 +275,8 @@ public class HorarioRepository
         horarioActual.IdDocente = horarioModificado.IdDocente;
         horarioActual.IdFranjaHoraria = horarioModificado.IdFranjaHoraria;
         horarioActual.Observacion = horarioModificado.Observacion;
+        horarioActual.Estado = "Pendiente";
+        horarioActual.MotivoRechazo = string.Empty;
 
         await contexto.SaveChangesAsync();
 
@@ -288,9 +288,7 @@ public class HorarioRepository
     {
         Horario? horario =
             await contexto.Horarios
-                .FirstOrDefaultAsync(horario =>
-                    horario.IdHorario == idHorario
-                );
+                .FirstOrDefaultAsync(horario => horario.IdHorario == idHorario);
 
         if (horario == null)
         {
@@ -304,15 +302,50 @@ public class HorarioRepository
         return true;
     }
 
+    // Desactiva todos los horarios activos de un grupo.
+    public async Task<int> DesactivarHorariosPorGrupoAsync(int idGrupo)
+    {
+        List<Horario> horarios = await contexto.Horarios
+            .Where(h => h.IdGrupo == idGrupo && h.Activo)
+            .ToListAsync();
+
+        foreach (Horario horario in horarios)
+        {
+            horario.Activo = false;
+        }
+
+        await contexto.SaveChangesAsync();
+
+        return horarios.Count;
+    }
+
+    // Actualiza el estado de todos los horarios activos de un grupo.
+    public async Task<int> ActualizarEstadoHorariosGrupoAsync(
+        int idGrupo,
+        string estado,
+        string motivoRechazo)
+    {
+        List<Horario> horarios = await contexto.Horarios
+            .Where(h => h.IdGrupo == idGrupo && h.Activo)
+            .ToListAsync();
+
+        foreach (Horario horario in horarios)
+        {
+            horario.Estado = estado;
+            horario.MotivoRechazo = motivoRechazo;
+        }
+
+        await contexto.SaveChangesAsync();
+
+        return horarios.Count;
+    }
+
     // Obtiene un grupo por su identificador.
     public async Task<Grupo?> ObtenerGrupoPorIdAsync(int idGrupo)
     {
         return await contexto.Grupos
             .FirstOrDefaultAsync(g => g.IdGrupo == idGrupo && g.Activo);
     }
-
-    // Obtiene las materias activas del semestre al que pertenece el grupo.
-    // Si no hay SemestrePlan configurado, busca por el nombre de materia del grupo.
 
     // Obtiene las materias activas del semestre al que pertenece el grupo.
     public async Task<List<Materia>> ObtenerMateriasDelGrupoAsync(int idGrupo)
@@ -342,8 +375,11 @@ public class HorarioRepository
                 mp.Materia != null &&
                 mp.Materia.Activa)
             .Select(mp => mp.Materia!)
+            .OrderByDescending(m => m.IntensidadHorariaSemanal)
+            .ThenBy(m => m.Nombre)
             .ToListAsync();
     }
+
     // Obtiene los docentes activos asignados a una materia.
     public async Task<List<Docente>> ObtenerDocentesPorMateriaAsync(int idMateria)
     {
@@ -355,36 +391,67 @@ public class HorarioRepository
                 dm.Docente != null &&
                 dm.Docente.Activo)
             .Select(dm => dm.Docente!)
+            .OrderBy(d => d.NombreCompleto)
             .ToListAsync();
     }
 
-    // Obtiene todas las franjas horarias activas ordenadas por día y hora.
+    // Obtiene todas las franjas horarias activas.
     public async Task<List<FranjaHoraria>> ObtenerFranjasActivasAsync()
     {
-        return await contexto.FranjasHorarias
+        List<FranjaHoraria> franjas = await contexto.FranjasHorarias
             .Where(f => f.Activa)
-            .OrderBy(f => f.DiaSemana)
-            .ThenBy(f => f.HoraInicio)
             .ToListAsync();
+
+        return franjas
+            .OrderBy(f => ObtenerOrdenDia(f.DiaSemana))
+            .ThenBy(f => f.HoraInicio)
+            .ToList();
     }
 
-    // Retorna los IDs de franjas ya usadas por un grupo (en horarios activos).
+    // Retorna los IDs de franjas ya usadas por un grupo en horarios activos.
     public async Task<HashSet<int>> ObtenerFranjasUsadasPorGrupoAsync(int idGrupo)
     {
-        var ids = await contexto.Horarios
+        List<int> ids = await contexto.Horarios
             .Where(h => h.IdGrupo == idGrupo && h.Activo)
             .Select(h => h.IdFranjaHoraria)
             .ToListAsync();
+
         return ids.ToHashSet();
     }
 
-    // Retorna los IDs de franjas ya usadas por un docente (en horarios activos).
+    // Retorna los IDs de franjas ya usadas por un docente en horarios activos.
     public async Task<HashSet<int>> ObtenerFranjasUsadasPorDocenteAsync(int idDocente)
     {
-        var ids = await contexto.Horarios
+        List<int> ids = await contexto.Horarios
             .Where(h => h.IdDocente == idDocente && h.Activo)
             .Select(h => h.IdFranjaHoraria)
             .ToListAsync();
+
         return ids.ToHashSet();
+    }
+
+    private IQueryable<Horario> ConsultaHorariosBase()
+    {
+        return contexto.Horarios
+            .Include(horario => horario.Grupo)
+            .Include(horario => horario.Materia)
+            .Include(horario => horario.Docente)
+            .Include(horario => horario.FranjaHoraria);
+    }
+
+    private static int ObtenerOrdenDia(string dia)
+    {
+        return dia.Trim().ToLower() switch
+        {
+            "lunes" => 1,
+            "martes" => 2,
+            "miércoles" => 3,
+            "miercoles" => 3,
+            "jueves" => 4,
+            "viernes" => 5,
+            "sábado" => 6,
+            "sabado" => 6,
+            _ => 99
+        };
     }
 }
